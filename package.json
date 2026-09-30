@@ -1,7 +1,7 @@
 {
   "name": "lab_345",
   "version": "1.0.0",
-  "description": "",
+  "description": "This project is a web application for managing university courses and teachers.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

@@ -1,89 +1,94 @@
-const { Courses } = require('../models/courseModel');
+const { courses } = require('../models/courseModel');
 
 const getCourses = (req, res) => {
-    let result = Courses;
+    let result = courses;
 
-    if (req.query.semester) {
-        result = result.filter(
-            course => course.semester === Number(req.query.semester)
+    const search = req.query.search || '';
+    const semester = req.query.semester || '';
+
+    if (search) {
+        const searchLower = search.toLowerCase();
+
+        result = result.filter(course =>
+            course.title.toLowerCase().includes(searchLower) ||
+            course.teacher.toLowerCase().includes(searchLower)
         );
     }
 
-    if (req.query.teacher) {
+    if (semester) {
         result = result.filter(
-            course => course.teacher.toLowerCase() === req.query.teacher.toLowerCase()
+            course => course.semester === Number(semester)
         );
     }
 
     res.render('courses/index', {
         title: 'Courses',
-        courses: result
+        courses: result,
+        search,
+        semester
     });
 };
 
 const getCourseById = (req, res) => {
-    const course = Courses.find(
+    const course = courses.find(
         course => course.id === Number(req.params.id)
     );
 
     if (!course) {
-        return res.status(404).json({
-            error: 'Course not found'
+        return res.status(404).render('404', {
+            url: req.originalUrl
         });
     }
 
-    res.json(course);
+    res.render('courses/details', {
+        title: course.title,
+        course
+    });
 };
 
 const addCourse = (req, res) => {
     const { title, teacher, credits, semester, description } = req.body;
 
-    if (!title || !teacher || !credits || !semester || !description) {
-        return res.status(400).json({
-            error: 'All fields are required'
-        });
-    }
-
     const newCourse = {
-        id: Courses.length > 0
-            ? Math.max(...Courses.map(course => course.id)) + 1
+        id: courses.length > 0
+            ? Math.max(...courses.map(course => course.id)) + 1
             : 1,
-        title,
-        teacher,
+        title: title.trim(),
+        teacher: teacher.trim(),
         credits: Number(credits),
         semester: Number(semester),
-        description
+        description: description.trim()
     };
 
-    Courses.push(newCourse);
+    courses.push(newCourse);
 
-    res.status(201).json(newCourse);
+    res.redirect('/courses');
 };
 
 const updateCourse = (req, res) => {
-    const course = Courses.find(
+    const course = courses.find(
         course => course.id === Number(req.params.id)
     );
 
     if (!course) {
-        return res.status(404).json({
-            error: 'Course not found'
+        return res.status(404).render('404', {
+            url: req.originalUrl
         });
     }
 
     const { title, teacher, credits, semester, description } = req.body;
 
-    if (title !== undefined) course.title = title;
-    if (teacher !== undefined) course.teacher = teacher;
-    if (credits !== undefined) course.credits = Number(credits);
-    if (semester !== undefined) course.semester = Number(semester);
-    if (description !== undefined) course.description = description;
+    course.title = title.trim();
+    course.teacher = teacher.trim();
+    course.credits = Number(credits);
+    course.semester = Number(semester);
+    course.description = description.trim();
 
-    res.status(200).json(course);
+    res.redirect(`/courses/${course.id}`);
 };
 
 const deleteCourse = (req, res) => {
-    const index = Courses.findIndex(
+    const index = courses.findIndex(
         course => course.id === Number(req.params.id)
     );
 
@@ -93,9 +98,9 @@ const deleteCourse = (req, res) => {
         });
     }
 
-    const deletedCourse = Courses.splice(index, 1)[0];
+    const deletedCourse = courses.splice(index, 1)[0];
 
-    res.status(200).json(deletedCourse);
+    res.redirect('/courses');
 };
 
 const searchCourses = (req, res) => {
@@ -107,7 +112,7 @@ const searchCourses = (req, res) => {
         });
     }
 
-    const result = Courses.filter(course =>
+    const result = courses.filter(course =>
         course.title.toLowerCase().includes(title.toLowerCase())
     );
 
@@ -115,25 +120,53 @@ const searchCourses = (req, res) => {
 };
 
 const getStatistics = (req, res) => {
-    const totalCredits = Courses.reduce(
+    const totalCredits = courses.reduce(
         (sum, course) => sum + course.credits,
         0
     );
 
     const semesters = new Set(
-        Courses.map(course => course.semester)
+        courses.map(course => course.semester)
     );
 
     res.json({
-        coursesCount: Courses.length,
+        coursesCount: courses.length,
         totalCredits,
         semestersCount: semesters.size
     });
 };
 
+const getCreateForm = (req, res) => {
+    res.render('courses/create', {
+        title: 'Добавить курс',
+        errors: [],
+        formData: {}
+    });
+};
+
+const getEditForm = (req, res) => {
+    const course = courses.find(
+        course => course.id === Number(req.params.id)
+    );
+
+    if (!course) {
+        return res.status(404).render('404', {
+            url: req.originalUrl
+        });
+    }
+
+    res.render('courses/edit', {
+        title: 'Редактировать курс',
+        course,
+        errors: []
+    });
+};
+
 module.exports = {
     getCourses,
+    getCreateForm,
     getCourseById,
+    getEditForm,
     addCourse,
     updateCourse,
     deleteCourse,

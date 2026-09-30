@@ -2,21 +2,27 @@ const express = require('express');
 
 const {
     getCourses,
+    getCreateForm,
     getCourseById,
+    getEditForm,
     addCourse,
     updateCourse,
-    deleteCourse,
-    searchCourses
-} = require('../controllers/CourseController');
+    deleteCourse
+} = require('../controllers/courseController');
+
+const validateCourse = require('../middleware/validateCourse');
 
 const router = express.Router();
 
-router.get('/search', searchCourses);
-
 router.get('/', getCourses);
+
+router.get('/new', getCreateForm);
+router.post('/', validateCourse, addCourse);
+
+router.get('/:id/edit', getEditForm);
+router.post('/:id/edit', validateCourse, updateCourse);
+
 router.get('/:id', getCourseById);
-router.post('/', addCourse);
-router.patch('/:id', updateCourse);
-router.delete('/:id', deleteCourse);
+router.post('/:id/delete', deleteCourse);
 
 module.exports = router;

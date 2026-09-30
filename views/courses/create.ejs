@@ -1,0 +1,84 @@
+<%- include('../partials/header') %>
+
+<h1>Добавить новый курс</h1>
+
+<% if (errors && errors.length > 0) { %>
+    <div class="error-message">
+        <ul>
+            <% errors.forEach(function(error) { %>
+                <li><%= error %></li>
+            <% }); %>
+        </ul>
+    </div>
+<% } %>
+
+<form action="/courses" method="POST" class="course-form">
+
+    <div>
+        <label for="title">Название дисциплины:</label>
+        <input
+            type="text"
+            id="title"
+            name="title"
+            value="<%= formData?.title || '' %>"
+        >
+    </div>
+
+    <div>
+        <label for="teacher">Преподаватель:</label>
+        <input
+            type="text"
+            id="teacher"
+            name="teacher"
+            value="<%= formData?.teacher || '' %>"
+        >
+    </div>
+
+    <div>
+        <label for="credits">Количество кредитов:</label>
+        <input
+            type="number"
+            id="credits"
+            name="credits"
+            min="1"
+            step="any"
+            value="<%= formData?.credits || '' %>"
+        >
+    </div>
+
+    <div>
+        <label for="semester">Семестр:</label>
+        <select id="semester" name="semester">
+            <option value="">Выберите семестр</option>
+
+            <% for (let i = 1; i <= 8; i++) { %>
+                <option
+                    value="<%= i %>"
+                    <%= String(formData?.semester || '') === String(i) ? 'selected' : '' %>
+                >
+                    <%= i %>
+                </option>
+            <% } %>
+        </select>
+    </div>
+
+    <div>
+        <label for="description">Описание:</label>
+        <textarea
+            id="description"
+            name="description"
+            rows="5"
+        ><%= formData?.description || '' %></textarea>
+    </div>
+
+    <button type="submit">
+        Добавить курс
+    </button>
+
+    <a href="/courses">
+        Отмена
+    </a>
+
+</form>
+
+<%- include('../partials/footer') %>
