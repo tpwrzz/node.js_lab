@@ -37,7 +37,7 @@ const validateCourse = (req, res, next) => {
             : 'courses/create';
 
         const courseData = {
-            id: req.params.id,
+            id: req.params.id ? Number(req.params.id) : undefined,
             title,
             teacher,
             credits,
