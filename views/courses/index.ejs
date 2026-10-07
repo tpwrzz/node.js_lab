@@ -7,19 +7,38 @@
 <h2>Поиск и фильтрация</h2>
 
 <form action="/courses" method="GET" class="filter-form">
+
     <div>
-        <label for="search">Поиск:</label>
+        <label for="search">Название курса:</label>
         <input
             type="text"
             id="search"
             name="search"
             value="<%= search || '' %>"
-            placeholder="Название или преподаватель"
+            placeholder="Введите название курса"
         >
     </div>
 
     <div>
+        <label for="teacherId">Преподаватель:</label>
+
+        <select id="teacherId" name="teacherId">
+            <option value="">Все преподаватели</option>
+
+            <% teachers.forEach(teacher => { %>
+                <option
+                    value="<%= teacher.id %>"
+                    <%= String(teacherId || '') === String(teacher.id) ? 'selected' : '' %>
+                >
+                    <%= teacher.name %>
+                </option>
+            <% }) %>
+        </select>
+    </div>
+
+    <div>
         <label for="semester">Семестр:</label>
+
         <select id="semester" name="semester">
             <option value="">Все семестры</option>
 
@@ -36,11 +55,12 @@
 
     <button type="submit">Применить</button>
     <a href="/courses">Сбросить</a>
+
 </form>
 
 <% if (courses.length === 0) { %>
 
-    <p>Курсы не найдены</p>
+    <p>Курсы не найдены.</p>
 
 <% } else { %>
 
@@ -56,14 +76,16 @@
         </thead>
 
         <tbody>
-            <% courses.forEach(function(course) { %>
+
+            <% courses.forEach(course => { %>
+
                 <tr>
                     <td>
                         <%= course.title %>
                     </td>
 
                     <td>
-                        <%= course.teacher %>
+                        <%= course.Teacher ? course.Teacher.name : 'Не указан' %>
                     </td>
 
                     <td>
@@ -95,7 +117,9 @@
                         </form>
                     </td>
                 </tr>
+
             <% }); %>
+
         </tbody>
     </table>
 

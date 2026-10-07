@@ -10,7 +10,7 @@ const {
     deleteCourse
 } = require('../controllers/courseController');
 
-const validateCourse = require('../middleware/validateCourse');
+const validateCourse = require('../middleware/validateData');
 
 const router = express.Router();
 

@@ -1,0 +1,71 @@
+<%- include('../partials/header', { title }) %>
+
+<h1><%= teacher.name %></h1>
+
+<h2>Информация о преподавателе</h2>
+
+<p>
+    <strong>Email:</strong>
+    <%= teacher.email %>
+</p>
+
+<p>
+    <strong>Кафедра:</strong>
+    <%= teacher.department %>
+</p>
+
+<p>
+    <strong>Учёная степень:</strong>
+    <%= teacher.academicDegree %>
+</p>
+
+<p>
+    <strong>Количество курсов:</strong>
+    <%= teacher.Courses.length %>
+</p>
+
+<h2>Курсы преподавателя</h2>
+
+<% if (teacher.Courses.length === 0) { %>
+
+    <p>У преподавателя нет курсов.</p>
+
+<% } else { %>
+
+    <ul>
+        <% teacher.Courses.forEach(course => { %>
+            <li>
+                <a href="/courses/<%= course.id %>">
+                    <%= course.title %>
+                </a>
+
+                — семестр <%= course.semester %>,
+                <%= course.credits %> кредитов
+            </li>
+        <% }) %>
+    </ul>
+
+<% } %>
+
+<p>
+    <a href="/teachers/<%= teacher.id %>/edit">
+        Редактировать
+    </a>
+</p>
+
+<form
+    action="/teachers/<%= teacher.id %>/delete"
+    method="POST"
+    style="display: inline;"
+    onsubmit="return confirm('Вы действительно хотите удалить этого преподавателя?');"
+>
+    <button type="submit">
+        Удалить
+    </button>
+</form>
+
+<p>
+    <a href="/teachers">Назад к преподавателям</a>
+</p>
+
+<%- include('../partials/footer') %>

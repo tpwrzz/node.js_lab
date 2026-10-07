@@ -1,157 +1,153 @@
-# Course Management System
+# Лабораторная работа №4
+## Ход работы
 
-## Description
+В ходе лабораторной работы я доработала приложение из лабораторной работы №3.
 
-This project is a web application for managing university courses and teachers.
+### 1. Подключение PostgreSQL
 
-The project was developed step by step during Laboratory Works №3, №4 and №5. It started as a simple Express.js application with data stored in an array and was later extended with PostgreSQL, Sequelize, authentication, authorization and real-time notifications.
+Была создана база данных `node_courses`.
 
-### Main Features
+Для подключения к базе данных были установлены пакеты:
 
-The application allows users to:
+- `sequelize`
+- `pg`
+- `pg-hstore`
+- `dotenv`
 
-* view courses and teachers;
-* add, edit and delete courses;
-* add, edit and delete teachers;
-* search and filter courses;
-* view course and teacher details;
-* view application statistics;
-* register and log in;
-* log out and view a personal profile;
-* use different permissions for `user` and `admin` roles;
-* receive notifications when a new course is created.
+Настройки подключения вынесены в файл `.env`, чтобы не хранить конфиденциальные данные непосредственно в коде.
 
-## Technologies
+### 2. Создание моделей
 
-* Node.js
-* Express.js
-* EJS
-* PostgreSQL
-* Sequelize
-* bcrypt
-* express-session
-* express-validator
-* Morgan
-* Socket.IO
-* dotenv
-* HTML/CSS
+С помощью Sequelize были созданы две модели:
 
-## Project Structure
+- `Teacher` — преподаватель;
+- `Course` — учебный курс.
+
+Модель преподавателя содержит имя, email, кафедру и учёную степень.
+
+Модель курса содержит название, количество кредитов, семестр, описание и идентификатор преподавателя.
+
+Между моделями была создана связь **один-ко-многим**:
 
 ```text
-project/
-├── app.js
-├── config/
-│   └── database.js
-├── routes/
-│   ├── authRoutes.js
-│   ├── courseRoutes.js
-│   └── teacherRoutes.js
-├── controllers/
-│   ├── authController.js
-│   ├── courseController.js
-│   └── teacherController.js
-├── models/
-│   ├── index.js
-│   ├── User.js
-│   ├── Course.js
-│   └── Teacher.js
-├── middleware/
-│   ├── auth.js
-│   ├── validation.js
-│   ├── logger.js
-│   ├── notFound.js
-│   └── errorHandler.js
-├── views/
-│   ├── auth/
-│   ├── courses/
-│   ├── teachers/
-│   ├── partials/
-│   ├── profile.ejs
-│   ├── 403.ejs
-│   ├── 404.ejs
-│   └── error.ejs
-├── public/
-│   ├── css/
-│   └── js/
-├── logs/
-├── .env
-└── package.json
+Teacher 1 ──────── * Course
 ```
 
-## Database
+Один преподаватель может вести несколько курсов, а каждый курс относится к одному преподавателю.
 
-The application uses **PostgreSQL** with **Sequelize**.
+### 3. CRUD преподавателей
 
-There are three main models:
+Для преподавателей реализованы все основные операции:
 
-* `User` — application users and their roles;
-* `Teacher` — teacher information;
-* `Course` — course information.
+- добавление;
+- просмотр списка;
+- просмотр отдельного преподавателя;
+- редактирование;
+- удаление.
 
-A teacher can have multiple courses, while each course belongs to one teacher.
+При удалении проверяется наличие связанных курсов. Преподавателя, у которого есть курсы, удалить нельзя.
 
-Database connection settings are stored in `.env` and are not included in the project repository.
+### 4. CRUD курсов
 
-## Authentication and Authorization
+Для курсов также реализованы:
 
-The application supports registration and login.
+- добавление;
+- просмотр списка;
+- просмотр отдельного курса;
+- редактирование;
+- удаление.
 
-Passwords are hashed using **bcrypt** before being saved to the database. User sessions are handled with **express-session**.
+При создании и редактировании курса можно выбрать преподавателя из списка.
 
-There are two roles:
+### 5. Поиск и фильтрация
 
-* `user` — can view courses and teachers, use search and filters, view the profile and statistics;
-* `admin` — has additional permissions to create, edit and delete courses and teachers.
+На странице курсов реализованы:
 
-Protected routes use authentication and authorization middleware.
+- поиск по названию курса;
+- фильтр по преподавателю;
+- фильтр по семестру;
+- комбинированный поиск по нескольким параметрам одновременно.
 
-## Validation and Error Handling
+Для выполнения запросов используется Sequelize.
 
-Form data is validated using **express-validator**.
+### 6. Валидация
 
-The application also has centralized error handling for cases such as:
+Для проверки данных используется единый middleware `validateData.js`.
 
-* invalid input;
-* incorrect login data;
-* missing records;
-* duplicate email;
-* unauthorized access;
-* insufficient permissions;
-* database errors.
+Проверяется:
 
-Separate `403`, `404` and general error pages are used.
+- обязательность полей;
+- корректность email преподавателя;
+- существование выбранного преподавателя;
+- положительное количество кредитов;
+- корректность семестра от 1 до 8;
+- заполненность описания курса.
 
-## Logging and Notifications
+Ошибки отображаются пользователю в форме.
 
-**Morgan** is used for HTTP request logging. Requests are also saved in:
+### 7. Обработка ошибок
+
+В приложении реализованы:
+
+- страницы 404 для несуществующих ресурсов;
+- обработка ошибок при работе с базой данных;
+- глобальный обработчик ошибок Express;
+- проверка существования преподавателей и курсов перед изменением или удалением.
+
+### 8. Статистика
+
+Была добавлена отдельная страница статистики.
+
+На ней отображаются:
+
+- общее количество преподавателей;
+- общее количество курсов;
+- количество курсов по каждому семестру;
+- количество курсов у каждого преподавателя;
+- преподаватель с максимальным количеством курсов.
+
+### 9. Структура приложения
+
+Для разделения ответственности используется MVC-подход:
 
 ```text
-logs/requests.log
+config/
+    database.js
+
+controllers/
+    courseController.js
+    teacherController.js
+    statisticsController.js
+
+middleware/
+    logger.js
+    validateData.js
+
+models/
+    Course.js
+    Teacher.js
+    index.js
+
+routes/
+    courseRoutes.js
+    teacherRoutes.js
+    statisticsRoutes.js
+
+views/
+    courses/
+    teachers/
+    statistics.ejs
+    404.ejs
+    error.ejs
+    partials/
+
+app.js
+.env
+.gitignore
 ```
 
-Administrator actions such as creating, editing and deleting courses or teachers are logged in the terminal.
+Бизнес-логика и работа с базой данных находятся в контроллерах и моделях, а `app.js` отвечает за настройку приложения, middleware, маршруты и запуск сервера.
 
-**Socket.IO** is used for real-time notifications. When an administrator creates a new course, other open pages receive a notification without reloading the page.
+## Результат
 
-## Running the Project
-
-Install the dependencies:
-
-```bash
-npm install
-```
-
-Create a PostgreSQL database and configure the `.env` file with the database and session settings.
-
-Then start the application:
-
-```bash
-node app.js
-```
-
-The application is available at:
-
-```text
-http://localhost:3000
-```
+В результате была создана полноценная система управления учебными курсами с использованием PostgreSQL и Sequelize. Данные теперь хранятся в базе данных, а приложение поддерживает CRUD-операции для преподавателей и курсов, связь между ними, поиск, фильтрацию, валидацию и просмотр статистики.

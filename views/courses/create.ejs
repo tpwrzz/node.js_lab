@@ -1,37 +1,35 @@
-<%- include('../partials/header') %>
+<%- include('../partials/header', { title }) %>
 
-<h1>Добавить новый курс</h1>
+<h1>Добавить курс</h1>
 
-<% if (errors && errors.length > 0) { %>
-    <div class="errors">
-        <ul>
-            <% errors.forEach(function(error) { %>
-                <li><%= error %></li>
-            <% }); %>
-        </ul>
-    </div>
-<% } %>
-
-<form action="/courses" method="POST" class="course-form">
+<form action="/courses" method="POST">
 
     <div>
-        <label for="title">Название дисциплины:</label>
+        <label for="title">Название курса:</label>
         <input
             type="text"
             id="title"
             name="title"
-            value="<%= formData?.title || '' %>"
+            value="<%= formData.title || '' %>"
+            required
         >
     </div>
 
     <div>
-        <label for="teacher">Преподаватель:</label>
-        <input
-            type="text"
-            id="teacher"
-            name="teacher"
-            value="<%= formData?.teacher || '' %>"
-        >
+        <label for="teacherId">Преподаватель:</label>
+
+        <select id="teacherId" name="teacherId" required>
+            <option value="">Выберите преподавателя</option>
+
+            <% teachers.forEach(teacher => { %>
+                <option
+                    value="<%= teacher.id %>"
+                    <%= String(formData.teacherId || '') === String(teacher.id) ? 'selected' : '' %>
+                >
+                    <%= teacher.name %>
+                </option>
+            <% }) %>
+        </select>
     </div>
 
     <div>
@@ -41,25 +39,22 @@
             id="credits"
             name="credits"
             min="1"
-            step="any"
-            value="<%= formData?.credits || '' %>"
+            value="<%= formData.credits || '' %>"
+            required
         >
     </div>
 
     <div>
         <label for="semester">Семестр:</label>
-        <select id="semester" name="semester">
-            <option value="">Выберите семестр</option>
-
-            <% for (let i = 1; i <= 8; i++) { %>
-                <option
-                    value="<%= i %>"
-                    <%= String(formData?.semester || '') === String(i) ? 'selected' : '' %>
-                >
-                    <%= i %>
-                </option>
-            <% } %>
-        </select>
+        <input
+            type="number"
+            id="semester"
+            name="semester"
+            min="1"
+            max="8"
+            value="<%= formData.semester || '' %>"
+            required
+        >
     </div>
 
     <div>
@@ -67,18 +62,13 @@
         <textarea
             id="description"
             name="description"
-            rows="5"
-        ><%= formData?.description || '' %></textarea>
+            required
+        ><%= formData.description || '' %></textarea>
     </div>
 
-    <button type="submit">
-        Добавить курс
-    </button>
-
-    <a href="/courses">
-        Отмена
-    </a>
-
+    <button type="submit">Добавить курс</button>
 </form>
+
+<a href="/courses">Назад к курсам</a>
 
 <%- include('../partials/footer') %>

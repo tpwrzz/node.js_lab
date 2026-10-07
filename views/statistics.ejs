@@ -1,0 +1,97 @@
+<%- include('./partials/header') %>
+
+<h1>Статистика</h1>
+
+<h2>Общая статистика</h2>
+
+<ul>
+    <li>
+        Количество преподавателей:
+        <strong><%= teachersCount %></strong>
+    </li>
+
+    <li>
+        Количество курсов:
+        <strong><%= coursesCount %></strong>
+    </li>
+</ul>
+
+
+<h2>Курсы по семестрам</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Семестр</th>
+            <th>Количество курсов</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        <% for (let semester = 1; semester <= 8; semester++) { %>
+            <tr>
+                <td>
+                    <%= semester %>
+                </td>
+
+                <td>
+                    <%= coursesBySemester[semester] %>
+                </td>
+            </tr>
+        <% } %>
+    </tbody>
+</table>
+
+
+<h2>Курсы по преподавателям</h2>
+
+<% if (coursesByTeacher.length === 0) { %>
+
+    <p>Преподавателей пока нет.</p>
+
+<% } else { %>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Преподаватель</th>
+                <th>Количество курсов</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <% coursesByTeacher.forEach(teacher => { %>
+                <tr>
+                    <td>
+                        <%= teacher.name %>
+                    </td>
+
+                    <td>
+                        <%= teacher.count %>
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+
+<% } %>
+
+
+<h2>Преподаватель с максимальным количеством курсов</h2>
+
+<% if (teacherWithMostCourses) { %>
+
+    <p>
+        <strong>
+            <%= teacherWithMostCourses.name %>
+        </strong>
+        — <%= teacherWithMostCourses.count %> курс(ов)
+    </p>
+
+<% } else { %>
+
+    <p>Данных о преподавателях пока нет.</p>
+
+<% } %>
+
+<%- include('./partials/footer') %>

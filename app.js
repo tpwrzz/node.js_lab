@@ -1,9 +1,13 @@
-'use strict';
+require('dotenv').config();
 
 const express = require('express');
 const app = express();
 
+const sequelize = require('./config/database');
+
 const courseRoutes = require('./routes/courseRoutes');
+const teacherRoutes = require('./routes/teacherRoutes');
+const statisticsRoutes = require('./routes/statisticsRoutes');
 const logger = require('./middleware/logger');
 
 const PORT = process.env.PORT || 3000;
@@ -21,6 +25,8 @@ app.get('/', (req, res) => {
 });
 
 app.use('/courses', courseRoutes);
+app.use('/teachers', teacherRoutes);
+app.use('/statistics', statisticsRoutes);
 
 // Global 404 handler
 app.use((req, res) => {
@@ -38,6 +44,22 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running at http://localhost:${PORT}`);
-});
+async function startServer() {
+    try {
+        await sequelize.authenticate();
+
+        console.log('Database connection established');
+
+        await sequelize.sync();
+
+        console.log('Database tables synchronized');
+
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error('Unable to start application:', error.message);
+    }
+}
+
+startServer();

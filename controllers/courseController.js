@@ -1,166 +1,318 @@
-const { courses } = require('../models/courseModel');
+const { Op } = require('sequelize');
+const { Course, Teacher } = require('../models');
 
-const getCourses = (req, res) => {
-    let result = courses;
+const getCourses = async (req, res) => {
+    try {
+        const search = req.query.search || '';
+        const teacherId = req.query.teacherId || '';
+        const semester = req.query.semester || '';
 
-    const search = req.query.search || '';
-    const semester = req.query.semester || '';
+        const where = {};
 
-    if (search) {
-        const searchLower = search.toLowerCase();
+        // Поиск по названию курса
+        if (search) {
+            where.title = {
+                [Op.iLike]: `%${search}%`
+            };
+        }
 
-        result = result.filter(course =>
-            course.title.toLowerCase().includes(searchLower) ||
-            course.teacher.toLowerCase().includes(searchLower)
-        );
-    }
+        // Фильтрация по преподавателю
+        if (teacherId) {
+            const teacherIdNumber = Number(teacherId);
 
-    if (semester) {
-        result = result.filter(
-            course => course.semester === Number(semester)
-        );
-    }
+            if (!Number.isInteger(teacherIdNumber)) {
+                return res.status(400).render('error', {
+                    title: 'Ошибка',
+                    message: 'Некорректный ID преподавателя'
+                });
+            }
 
-    res.render('courses/index', {
-        title: 'Courses',
-        courses: result,
-        search,
-        semester
-    });
-};
+            where.teacherId = teacherIdNumber;
+        }
 
-const getCourseById = (req, res) => {
-    const course = courses.find(
-        course => course.id === Number(req.params.id)
-    );
+        // Фильтрация по семестру
+        if (semester) {
+            const semesterNumber = Number(semester);
 
-    if (!course) {
-        return res.status(404).render('404', {
-            url: req.originalUrl
+            if (!Number.isInteger(semesterNumber)) {
+                return res.status(400).render('error', {
+                    title: 'Ошибка',
+                    message: 'Некорректный семестр'
+                });
+            }
+
+            where.semester = semesterNumber;
+        }
+
+        const [courses, teachers] = await Promise.all([
+            Course.findAll({
+                where,
+                include: {
+                    model: Teacher,
+                    attributes: ['id', 'name', 'email', 'department']
+                },
+                order: [['id', 'ASC']]
+            }),
+
+            Teacher.findAll({
+                order: [['name', 'ASC']]
+            })
+        ]);
+
+        res.render('courses/index', {
+            title: 'Courses',
+            courses,
+            teachers,
+            search,
+            teacherId,
+            semester
+        });
+    } catch (error) {
+        console.error('Error getting courses:', error);
+
+        res.status(500).render('error', {
+            title: 'Ошибка',
+            message: 'Не удалось загрузить курсы'
         });
     }
-
-    res.render('courses/details', {
-        title: course.title,
-        course
-    });
 };
 
-const addCourse = (req, res) => {
-    const { title, teacher, credits, semester, description } = req.body;
 
-    const newCourse = {
-        id: courses.length > 0
-            ? Math.max(...courses.map(course => course.id)) + 1
-            : 1,
-        title: title.trim(),
-        teacher: teacher.trim(),
-        credits: Number(credits),
-        semester: Number(semester),
-        description: description.trim()
-    };
+const getCourseById = async (req, res) => {
+    try {
+        const id = Number(req.params.id);
 
-    courses.push(newCourse);
+        if (!Number.isInteger(id) || id <= 0) {
+            return res.status(404).render('404', {
+                url: req.originalUrl
+            });
+        }
 
-    res.redirect('/courses');
-};
+        const course = await Course.findByPk(id, {
+            include: {
+                model: Teacher,
+                attributes: ['id', 'name', 'email', 'department']
+            }
+        });
 
-const updateCourse = (req, res) => {
-    const course = courses.find(
-        course => course.id === Number(req.params.id)
-    );
+        if (!course) {
+            return res.status(404).render('404', {
+                url: req.originalUrl
+            });
+        }
 
-    if (!course) {
-        return res.status(404).render('404', {
-            url: req.originalUrl
+        res.render('courses/details', {
+            title: course.title,
+            course
+        });
+    } catch (error) {
+        console.error('Error getting course:', error);
+
+        res.status(500).render('error', {
+            title: 'Ошибка',
+            message: 'Не удалось загрузить курс'
         });
     }
-
-    const { title, teacher, credits, semester, description } = req.body;
-
-    course.title = title.trim();
-    course.teacher = teacher.trim();
-    course.credits = Number(credits);
-    course.semester = Number(semester);
-    course.description = description.trim();
-
-    res.redirect(`/courses/${course.id}`);
 };
 
-const deleteCourse = (req, res) => {
-    const index = courses.findIndex(
-        course => course.id === Number(req.params.id)
-    );
 
-    if (index === -1) {
-        return res.status(404).json({
-            error: 'Course not found'
+const getCreateForm = async (req, res) => {
+    try {
+        const teachers = await Teacher.findAll({
+            order: [['name', 'ASC']]
+        });
+
+        res.render('courses/create', {
+            title: 'Добавить курс',
+            teachers,
+            errors: [],
+            formData: {}
+        });
+    } catch (error) {
+        console.error('Error loading create course form:', error);
+
+        res.status(500).render('error', {
+            title: 'Ошибка',
+            message: 'Не удалось загрузить форму добавления курса'
         });
     }
-
-    const deletedCourse = courses.splice(index, 1)[0];
-
-    res.redirect('/courses');
 };
 
-const searchCourses = (req, res) => {
-    const title = req.query.title;
 
-    if (!title) {
-        return res.status(400).json({
-            error: 'Title query parameter is required'
+const addCourse = async (req, res) => {
+    try {
+        const {
+            title,
+            teacherId,
+            credits,
+            semester,
+            description
+        } = req.body;
+
+        const teacherIdNumber = Number(teacherId);
+
+        // Проверяем существование преподавателя
+        const teacher = await Teacher.findByPk(teacherIdNumber);
+
+        if (!teacher) {
+            return res.status(400).render('error', {
+                title: 'Ошибка',
+                message: 'Выбранный преподаватель не существует'
+            });
+        }
+
+        await Course.create({
+            title: title.trim(),
+            teacherId: teacherIdNumber,
+            credits: Number(credits),
+            semester: Number(semester),
+            description: description.trim()
+        });
+
+        res.redirect('/courses');
+    } catch (error) {
+        console.error('Error adding course:', error);
+
+        res.status(500).render('error', {
+            title: 'Ошибка',
+            message: 'Не удалось добавить курс'
         });
     }
-
-    const result = courses.filter(course =>
-        course.title.toLowerCase().includes(title.toLowerCase())
-    );
-
-    res.json(result);
 };
 
-const getStatistics = (req, res) => {
-    const totalCredits = courses.reduce(
-        (sum, course) => sum + course.credits,
-        0
-    );
 
-    const semesters = new Set(
-        courses.map(course => course.semester)
-    );
+const getEditForm = async (req, res) => {
+    try {
+        const id = Number(req.params.id);
 
-    res.json({
-        coursesCount: courses.length,
-        totalCredits,
-        semestersCount: semesters.size
-    });
-};
+        if (!Number.isInteger(id) || id <= 0) {
+            return res.status(404).render('404', {
+                url: req.originalUrl
+            });
+        }
 
-const getCreateForm = (req, res) => {
-    res.render('courses/create', {
-        title: 'Добавить курс',
-        errors: [],
-        formData: {}
-    });
-};
+        const [course, teachers] = await Promise.all([
+            Course.findByPk(id, {
+                include: Teacher
+            }),
 
-const getEditForm = (req, res) => {
-    const course = courses.find(
-        course => course.id === Number(req.params.id)
-    );
+            Teacher.findAll({
+                order: [['name', 'ASC']]
+            })
+        ]);
 
-    if (!course) {
-        return res.status(404).render('404', {
-            url: req.originalUrl
+        if (!course) {
+            return res.status(404).render('404', {
+                url: req.originalUrl
+            });
+        }
+
+        res.render('courses/edit', {
+            title: 'Редактировать курс',
+            course,
+            teachers,
+            errors: []
+        });
+    } catch (error) {
+        console.error('Error loading edit course form:', error);
+
+        res.status(500).render('error', {
+            title: 'Ошибка',
+            message: 'Не удалось загрузить форму редактирования курса'
         });
     }
-
-    res.render('courses/edit', {
-        title: 'Редактировать курс',
-        course,
-        errors: []
-    });
 };
+
+
+const updateCourse = async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+
+        if (!Number.isInteger(id) || id <= 0) {
+            return res.status(404).render('404', {
+                url: req.originalUrl
+            });
+        }
+
+        const course = await Course.findByPk(id);
+
+        if (!course) {
+            return res.status(404).render('404', {
+                url: req.originalUrl
+            });
+        }
+
+        const {
+            title,
+            teacherId,
+            credits,
+            semester,
+            description
+        } = req.body;
+
+        const teacherIdNumber = Number(teacherId);
+
+        // Проверяем существование преподавателя
+        const teacher = await Teacher.findByPk(teacherIdNumber);
+
+        if (!teacher) {
+            return res.status(400).render('error', {
+                title: 'Ошибка',
+                message: 'Выбранный преподаватель не существует'
+            });
+        }
+
+        await course.update({
+            title: title.trim(),
+            teacherId: teacherIdNumber,
+            credits: Number(credits),
+            semester: Number(semester),
+            description: description.trim()
+        });
+
+        res.redirect(`/courses/${course.id}`);
+    } catch (error) {
+        console.error('Error updating course:', error);
+
+        res.status(500).render('error', {
+            title: 'Ошибка',
+            message: 'Не удалось обновить курс'
+        });
+    }
+};
+
+
+const deleteCourse = async (req, res) => {
+    try {
+        const id = Number(req.params.id);
+
+        if (!Number.isInteger(id) || id <= 0) {
+            return res.status(404).render('404', {
+                url: req.originalUrl
+            });
+        }
+
+        const course = await Course.findByPk(id);
+
+        if (!course) {
+            return res.status(404).render('404', {
+                url: req.originalUrl
+            });
+        }
+
+        await course.destroy();
+
+        res.redirect('/courses');
+    } catch (error) {
+        console.error('Error deleting course:', error);
+
+        res.status(500).render('error', {
+            title: 'Ошибка',
+            message: 'Не удалось удалить курс'
+        });
+    }
+};
+
 
 module.exports = {
     getCourses,
@@ -169,8 +321,5 @@ module.exports = {
     getEditForm,
     addCourse,
     updateCourse,
-    deleteCourse,
-    searchCourses,
-    getStatistics
+    deleteCourse
 };
-
