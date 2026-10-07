@@ -158,6 +158,7 @@ const getEditForm = (req, res) => {
     res.render('courses/edit', {
         title: 'Редактировать курс',
         course,
+        formData: course,
         errors: []
     });
 };
