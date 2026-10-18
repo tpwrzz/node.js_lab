@@ -3,7 +3,7 @@
 const express = require('express');
 const app = express();
 
-const courseRoutes = require('./routes/courseRoutes');
+const movieRoutes = require('./routes/movieRoutes');
 const logger = require('./middleware/logger');
 
 const PORT = process.env.PORT || 3000;
@@ -11,16 +11,17 @@ const PORT = process.env.PORT || 3000;
 app.set('view engine', 'ejs');
 app.set('views', './views');
 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
-
 app.use(logger);
 
 app.get('/', (req, res) => {
-    res.redirect('/courses');
+    res.redirect('/movies');
 });
 
-app.use('/courses', courseRoutes);
+app.use('/movies', movieRoutes);
+app.use('/api/movies', movieRoutes);
 
 // Global 404 handler
 app.use((req, res) => {
