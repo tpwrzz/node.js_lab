@@ -1,5 +1,5 @@
 const sequelize = require('../config/database');
-
+const User = require('./User');F
 const Teacher = require('./teacher');
 const Course = require('./course');
 
@@ -16,5 +16,6 @@ Course.belongsTo(Teacher, {
 module.exports = {
     sequelize,
     Teacher,
-    Course
+    Course,
+    User
 };

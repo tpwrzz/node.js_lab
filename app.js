@@ -4,11 +4,15 @@ const express = require('express');
 const app = express();
 
 const sequelize = require('./config/database');
+const session = require('express-session');
+require('dotenv').config();
 
 const courseRoutes = require('./routes/courseRoutes');
 const teacherRoutes = require('./routes/teacherRoutes');
 const statisticsRoutes = require('./routes/statisticsRoutes');
+const authRoutes = require('./routes/authRoutes');
 const logger = require('./middleware/logger');
+const { isAuthenticated, isAdmin } = require('./middleware/auth');
 
 const PORT = process.env.PORT || 3000;
 
@@ -19,14 +23,30 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 app.use(logger);
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        maxAge: 1000 * 60 * 60,
+        httpOnly: true
+    }
+}));
 
-app.get('/', (req, res) => {
-    res.redirect('/courses');
+app.use((req, res, next) => {
+    res.locals.currentUser = req.session.user || null;
+    next();
 });
+
+
+// app.get('/', (req, res) => {
+//     res.redirect('/courses');
+// });
 
 app.use('/courses', courseRoutes);
 app.use('/teachers', teacherRoutes);
 app.use('/statistics', statisticsRoutes);
+app.use('/', authRoutes);
 
 // Global 404 handler
 app.use((req, res) => {
