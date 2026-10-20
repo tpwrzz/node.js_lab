@@ -1,70 +1,43 @@
 <%- include('../partials/header', { title }) %>
 
-<h1>Редактировать преподавателя</h1>
+    <h1>Редактировать преподавателя</h1>
 
-<% if (errors && errors.length > 0) { %>
-    <ul>
-        <% errors.forEach(error => { %>
-            <li><%= error %></li>
-        <% }) %>
-    </ul>
-<% } %>
+    <form action="/teachers/<%= teacher.id %>/edit" method="POST">
+        <% if (errors && errors.length> 0) { %>
+            <ul class="validation-errors">
+                <% errors.forEach(error=> { %>
+                    <li>
+                        <%= error.msg || error %>
+                    </li>
+                    <% }) %>
+            </ul>
+            <% } %>
 
-<form action="/teachers/<%= teacher.id %>/edit" method="POST">
+                <div>
+                    <label for="name">Имя:</label>
+                    <input type="text" id="name" name="name" value="<%= teacher.name || '' %>" required>
+                </div>
 
-    <div>
-        <label for="name">Имя:</label>
+                <div>
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" value="<%= teacher.email || '' %>" required>
+                </div>
 
-        <input
-            type="text"
-            id="name"
-            name="name"
-            value="<%= teacher.name %>"
-            required
-        >
-    </div>
+                <div>
+                    <label for="department">Кафедра:</label>
+                    <input type="text" id="department" name="department" value="<%= teacher.department || '' %>"
+                        required>
+                </div>
 
-    <div>
-        <label for="email">Email:</label>
+                <div>
+                    <label for="academicDegree">Учёная степень:</label>
+                    <input type="text" id="academicDegree" name="academicDegree"
+                        value="<%= teacher.academicDegree || '' %>" required>
+                </div>
 
-        <input
-            type="email"
-            id="email"
-            name="email"
-            value="<%= teacher.email %>"
-            required
-        >
-    </div>
+                <button type="submit">Сохранить изменения</button>
+    </form>
 
-    <div>
-        <label for="department">Кафедра:</label>
+    <a href="/teachers/<%= teacher.id %>">Отмена</a>
 
-        <input
-            type="text"
-            id="department"
-            name="department"
-            value="<%= teacher.department %>"
-            required
-        >
-    </div>
-
-    <div>
-        <label for="academicDegree">Учёная степень:</label>
-
-        <input
-            type="text"
-            id="academicDegree"
-            name="academicDegree"
-            value="<%= teacher.academicDegree %>"
-            required
-        >
-    </div>
-
-    <button type="submit">
-        Сохранить изменения
-    </button>
-</form>
-
-<a href="/teachers/<%= teacher.id %>">Отмена</a>
-
-<%- include('../partials/footer') %>
+    <%- include('../partials/footer') %>

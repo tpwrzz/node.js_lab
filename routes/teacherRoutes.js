@@ -1,4 +1,5 @@
 const express = require('express');
+const { isAdmin } = require('../middleware/auth');
 
 const {
     getTeachers,
@@ -10,19 +11,17 @@ const {
     deleteTeacher
 } = require('../controllers/teacherController');
 
-const validateData = require('../middleware/validateData');
+const { validateTeacher } = require('../middleware/validateData');
 
 const router = express.Router();
 
 router.get('/', getTeachers);
-
-router.get('/new', getCreateForm);
-router.post('/', validateData, addTeacher);
-
-router.get('/:id/edit', getEditForm);
-router.post('/:id/edit', validateData, updateTeacher);
-
+router.get('/new', isAdmin, getCreateForm);
 router.get('/:id', getTeacherById);
-router.post('/:id/delete', deleteTeacher);
+
+router.post('/', isAdmin, validateTeacher, addTeacher);
+router.get('/:id/edit', isAdmin, getEditForm);
+router.post('/:id/edit', isAdmin, validateTeacher, updateTeacher);
+router.post('/:id/delete', isAdmin, deleteTeacher);
 
 module.exports = router;

@@ -1,177 +1,109 @@
-const { Teacher } = require('../models');
+const { body, validationResult } = require('express-validator');
 
-const validateData = async (req, res, next) => {
-    const isTeacher = req.baseUrl === '/teachers';
+const validateRegistration = [
+    body('name')
+        .trim()
+        .isLength({ min: 2, max: 100 })
+        .withMessage('Имя должно содержать от 2 до 100 символов'),
 
-    const errors = [];
+    body('email')
+        .trim()
+        .isEmail()
+        .withMessage('Введите корректный email'),
 
-    if (isTeacher) {
-        const {
-            name,
-            email,
-            department,
-            academicDegree
-        } = req.body;
+    body('password')
+        .isLength({ min: 8 })
+        .withMessage('Пароль должен содержать минимум 8 символов'),
 
-        // Валидация преподавателя
+    body('confirmPassword')
+        .custom((value, { req }) => value === req.body.password)
+        .withMessage('Пароли не совпадают')
+];
 
-        if (!name || !name.trim()) {
-            errors.push('Имя преподавателя обязательно');
-        }
+const validateLogin = [
+    body('email')
+        .trim()
+        .isEmail()
+        .withMessage('Введите корректный email'),
 
-        if (!email || !email.trim()) {
-            errors.push('Email обязателен');
-        } else {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    body('password')
+        .notEmpty()
+        .withMessage('Введите пароль')
+];
 
-            if (!emailRegex.test(email.trim())) {
-                errors.push('Введите корректный email');
-            }
-        }
+const validateTeacher = [
+    body('name')
+        .trim()
+        .isLength({ min: 2 })
+        .withMessage('Имя должно содержать минимум 2 символа'),
 
-        if (!department || !department.trim()) {
-            errors.push('Кафедра обязательна');
-        }
+    body('email')
+        .trim()
+        .isEmail()
+        .withMessage('Введите корректный email'),
 
-        if (!academicDegree || !academicDegree.trim()) {
-            errors.push('Учёная степень обязательна');
-        }
+    body('department')
+        .trim()
+        .notEmpty()
+        .withMessage('Укажите кафедру'),
 
-        if (errors.length > 0) {
-            const teacherData = {
-                id: req.params.id
-                    ? Number(req.params.id)
-                    : undefined,
-                name,
-                email,
-                department,
-                academicDegree
-            };
+    body('academicDegree')
+        .trim()
+        .notEmpty()
+        .withMessage('Укажите учёную степень')
+];
 
-            const view = req.params.id
-                ? 'teachers/edit'
-                : 'teachers/create';
 
-            return res.status(400).render(view, {
-                title: req.params.id
-                    ? 'Редактировать преподавателя'
-                    : 'Добавить преподавателя',
-                teacher: teacherData,
-                formData: teacherData,
-                errors
-            });
-        }
+const validateCourse = [
+    body('title')
+        .trim()
+        .notEmpty().withMessage('Введите название курса')
+        .bail()
+        .isLength({ max: 200 }).withMessage('Название курса не должно превышать 200 символов'),
 
-        return next();
-    }
+    body('credits')
+        .notEmpty().withMessage('Укажите количество кредитов')
+        .bail()
+        .isInt({ min: 1, max: 60 })
+        .withMessage('Количество кредитов должно быть целым числом от 1 до 60'),
 
-    // Валидация курса
+    body('semester')
+        .notEmpty().withMessage('Укажите семестр')
+        .bail()
+        .isInt({ min: 1, max: 12 })
+        .withMessage('Семестр должен быть целым числом от 1 до 12'),
 
-    const {
-        title,
-        teacherId,
-        credits,
-        semester,
-        description
-    } = req.body;
+    body('description')
+        .trim()
+        .notEmpty().withMessage('Введите описание курса')
+        .bail()
+        .isLength({ max: 5000 })
+        .withMessage('Описание не должно превышать 5000 символов'),
 
-    if (!title || !title.trim()) {
-        errors.push('Название дисциплины обязательно');
-    }
+    body('teacherId')
+        .notEmpty().withMessage('Выберите преподавателя')
+        .bail()
+        .isInt({ min: 1 })
+        .withMessage('Выберите корректного преподавателя')
+];
 
-    // Проверка преподавателя
-    if (!teacherId || teacherId === '') {
-        errors.push('Преподаватель обязателен');
-    } else if (
-        !Number.isInteger(Number(teacherId)) ||
-        Number(teacherId) <= 0
-    ) {
-        errors.push('Некорректный преподаватель');
-    } else {
-        try {
-            const teacher = await Teacher.findByPk(Number(teacherId));
 
-            if (!teacher) {
-                errors.push('Выбранный преподаватель не существует');
-            }
-        } catch (error) {
-            console.error('Error validating teacher:', error);
+function handleValidationErrors(req, res, next) {
+    const errors = validationResult(req);
 
-            return res.status(500).render('error', {
-                title: 'Ошибка',
-                message: 'Не удалось проверить преподавателя'
-            });
-        }
-    }
-
-    // Проверка количества кредитов
-    if (credits === undefined || credits === '') {
-        errors.push('Количество кредитов обязательно');
-    } else if (
-        !Number.isInteger(Number(credits)) ||
-        Number(credits) <= 0
-    ) {
-        errors.push('Количество кредитов должно быть положительным целым числом');
-    }
-
-    // Проверка семестра
-    if (semester === undefined || semester === '') {
-        errors.push('Семестр обязателен');
-    } else if (
-        !Number.isInteger(Number(semester)) ||
-        Number(semester) < 1 ||
-        Number(semester) > 8
-    ) {
-        errors.push('Семестр должен находиться в диапазоне от 1 до 8');
-    }
-
-    // Проверка описания
-    if (!description || !description.trim()) {
-        errors.push('Описание дисциплины обязательно');
-    }
-
-    // Если есть ошибки
-    if (errors.length > 0) {
-        try {
-            const teachers = await Teacher.findAll({
-                order: [['name', 'ASC']]
-            });
-
-            const courseData = {
-                id: req.params.id
-                    ? Number(req.params.id)
-                    : undefined,
-                title,
-                teacherId,
-                credits,
-                semester,
-                description
-            };
-
-            const view = req.params.id
-                ? 'courses/edit'
-                : 'courses/create';
-
-            return res.status(400).render(view, {
-                title: req.params.id
-                    ? 'Редактировать курс'
-                    : 'Добавить курс',
-                course: courseData,
-                formData: courseData,
-                teachers,
-                errors
-            });
-        } catch (error) {
-            console.error('Error loading teachers:', error);
-
-            return res.status(500).render('error', {
-                title: 'Ошибка',
-                message: 'Не удалось загрузить список преподавателей'
-            });
-        }
+    if (!errors.isEmpty()) {
+        return res.status(400).render('error', {
+            message: errors.array().map(error => error.msg).join('. ')
+        });
     }
 
     next();
-};
+}
 
-module.exports = validateData;
+module.exports = {
+    validateRegistration,
+    validateLogin,
+    validateTeacher,
+    validateCourse,
+    handleValidationErrors
+};

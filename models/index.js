@@ -1,5 +1,5 @@
 const sequelize = require('../config/database');
-const User = require('./User');F
+const User = require('./User');
 const Teacher = require('./teacher');
 const Course = require('./course');
 

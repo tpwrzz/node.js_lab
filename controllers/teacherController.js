@@ -1,6 +1,9 @@
-const { Teacher, Course } = require('../models');
 
-const getTeachers = async (req, res) => {
+const { Teacher, Course } = require('../models');
+const { validationResult } = require('express-validator');
+const { logAdminAction } = require('../middleware/logger');
+
+const getTeachers = async (req, res, next) => {
     try {
         const teachers = await Teacher.findAll({
             include: {
@@ -10,67 +13,78 @@ const getTeachers = async (req, res) => {
             order: [['name', 'ASC']]
         });
 
-        res.render('teachers/index', {
+        return res.render('teachers/index', {
             title: 'Преподаватели',
             teachers
         });
     } catch (error) {
-        console.error('Error getting teachers:', error);
-
-        res.status(500).render('error', {
-            title: 'Ошибка',
-            message: 'Не удалось загрузить преподавателей'
-        });
+        return next(error);
     }
 };
 
-
 const getCreateForm = (req, res) => {
-    res.render('teachers/create', {
+    return res.render('teachers/create', {
         title: 'Добавить преподавателя',
         errors: [],
         formData: {}
     });
 };
 
-
-const addTeacher = async (req, res) => {
+const addTeacher = async (req, res, next) => {
     try {
-        const {
-            name,
-            email,
-            department,
-            academicDegree
-        } = req.body;
+        const errors = validationResult(req);
 
-        await Teacher.create({
-            name: name.trim(),
-            email: email.trim(),
-            department: department.trim(),
-            academicDegree: academicDegree.trim()
-        });
-
-        res.redirect('/teachers');
-    } catch (error) {
-        console.error('Error adding teacher:', error);
-
-        if (error.name === 'SequelizeUniqueConstraintError') {
+        if (!errors.isEmpty()) {
             return res.status(400).render('teachers/create', {
                 title: 'Добавить преподавателя',
-                errors: ['Преподаватель с таким email уже существует'],
+                errors: errors.array(),
                 formData: req.body
             });
         }
 
-        res.status(500).render('error', {
-            title: 'Ошибка',
-            message: 'Не удалось добавить преподавателя'
+        const { name, email, department, academicDegree } = req.body;
+        const normalizedEmail = email.trim().toLowerCase();
+
+        const existingTeacher = await Teacher.findOne({
+            where: { email: normalizedEmail }
         });
+
+        if (existingTeacher) {
+            return res.status(409).render('teachers/create', {
+                title: 'Добавить преподавателя',
+                errors: [
+                    { msg: 'Преподаватель с таким email уже существует' }
+                ],
+                formData: req.body
+            });
+        }
+
+        const teacher = await Teacher.create({
+            name: name.trim(),
+            email: normalizedEmail,
+            department: department.trim(),
+            academicDegree: academicDegree.trim()
+        });
+
+        logAdminAction(req, 'CREATE', 'TEACHER', teacher.id);
+
+        return res.redirect('/teachers');
+    } catch (error) {
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(409).render('teachers/create', {
+                title: 'Добавить преподавателя',
+                errors: [
+                    { msg: 'Преподаватель с таким email уже существует' }
+                ],
+                formData: req.body
+            });
+        }
+
+        return next(error);
     }
 };
 
-
-const getTeacherById = async (req, res) => {
+const getTeacherById = async (req, res, next) => {
     try {
         const id = Number(req.params.id);
 
@@ -89,8 +103,7 @@ const getTeacherById = async (req, res) => {
                     'credits',
                     'semester',
                     'description'
-                ],
-                order: [['id', 'ASC']]
+                ]
             }
         });
 
@@ -100,22 +113,16 @@ const getTeacherById = async (req, res) => {
             });
         }
 
-        res.render('teachers/details', {
+        return res.render('teachers/details', {
             title: teacher.name,
             teacher
         });
     } catch (error) {
-        console.error('Error getting teacher:', error);
-
-        res.status(500).render('error', {
-            title: 'Ошибка',
-            message: 'Не удалось загрузить преподавателя'
-        });
+        return next(error);
     }
 };
 
-
-const getEditForm = async (req, res) => {
+const getEditForm = async (req, res, next) => {
     try {
         const id = Number(req.params.id);
 
@@ -133,23 +140,17 @@ const getEditForm = async (req, res) => {
             });
         }
 
-        res.render('teachers/edit', {
+        return res.render('teachers/edit', {
             title: 'Редактировать преподавателя',
             teacher,
             errors: []
         });
     } catch (error) {
-        console.error('Error loading teacher edit form:', error);
-
-        res.status(500).render('error', {
-            title: 'Ошибка',
-            message: 'Не удалось загрузить форму редактирования'
-        });
+        return next(error);
     }
 };
 
-
-const updateTeacher = async (req, res) => {
+const updateTeacher = async (req, res, next) => {
     try {
         const id = Number(req.params.id);
 
@@ -167,68 +168,68 @@ const updateTeacher = async (req, res) => {
             });
         }
 
-        const {
-            name,
-            email,
-            department,
-            academicDegree
-        } = req.body;
+        const errors = validationResult(req);
 
-        const existingTeacher = await Teacher.findOne({
-            where: {
-                email: email.trim()
-            }
-        });
-
-        if (
-            existingTeacher &&
-            existingTeacher.id !== teacher.id
-        ) {
+        if (!errors.isEmpty()) {
             return res.status(400).render('teachers/edit', {
                 title: 'Редактировать преподавателя',
                 teacher: {
                     ...teacher.toJSON(),
                     ...req.body
                 },
+                errors: errors.array()
+            });
+        }
+
+        const { name, email, department, academicDegree } = req.body;
+        const normalizedEmail = email.trim().toLowerCase();
+
+        const existingTeacher = await Teacher.findOne({
+            where: { email: normalizedEmail }
+        });
+
+        if (existingTeacher && existingTeacher.id !== teacher.id) {
+            return res.status(409).render('teachers/edit', {
+                title: 'Редактировать преподавателя',
+                teacher: {
+                    ...teacher.toJSON(),
+                    ...req.body
+                },
                 errors: [
-                    'Преподаватель с таким email уже существует'
+                    { msg: 'Преподаватель с таким email уже существует' }
                 ]
             });
         }
 
         await teacher.update({
             name: name.trim(),
-            email: email.trim(),
+            email: normalizedEmail,
             department: department.trim(),
             academicDegree: academicDegree.trim()
         });
 
-        res.redirect(`/teachers/${teacher.id}`);
-    } catch (error) {
-        console.error('Error updating teacher:', error);
+        logAdminAction(req, 'UPDATE', 'TEACHER', teacher.id);
 
+        return res.redirect(`/teachers/${teacher.id}`);
+    } catch (error) {
         if (error.name === 'SequelizeUniqueConstraintError') {
-            return res.status(400).render('teachers/edit', {
+            return res.status(409).render('teachers/edit', {
                 title: 'Редактировать преподавателя',
                 teacher: {
-                    ...req.body,
+                    ...(req.body || {}),
                     id: req.params.id
                 },
                 errors: [
-                    'Преподаватель с таким email уже существует'
+                    { msg: 'Преподаватель с таким email уже существует' }
                 ]
             });
         }
 
-        res.status(500).render('error', {
-            title: 'Ошибка',
-            message: 'Не удалось обновить преподавателя'
-        });
+        return next(error);
     }
 };
 
-
-const deleteTeacher = async (req, res) => {
+const deleteTeacher = async (req, res, next) => {
     try {
         const id = Number(req.params.id);
 
@@ -252,7 +253,7 @@ const deleteTeacher = async (req, res) => {
         }
 
         if (teacher.Courses.length > 0) {
-            return res.status(400).render('error', {
+            return res.status(409).render('error', {
                 title: 'Невозможно удалить преподавателя',
                 message: 'Невозможно удалить преподавателя, у которого есть курсы'
             });
@@ -260,17 +261,13 @@ const deleteTeacher = async (req, res) => {
 
         await teacher.destroy();
 
-        res.redirect('/teachers');
-    } catch (error) {
-        console.error('Error deleting teacher:', error);
+        logAdminAction(req, 'DELETE', 'TEACHER', teacher.id);
 
-        res.status(500).render('error', {
-            title: 'Ошибка',
-            message: 'Не удалось удалить преподавателя'
-        });
+        return res.redirect('/teachers');
+    } catch (error) {
+        return next(error);
     }
 };
-
 
 module.exports = {
     getTeachers,

@@ -1,11 +1,17 @@
 require('dotenv').config();
 
+const morgan = require('morgan');
 const express = require('express');
-const app = express();
-
+const http = require('http');
+const { Server } = require('socket.io');
 const sequelize = require('./config/database');
 const session = require('express-session');
-require('dotenv').config();
+
+const app = express();
+
+const server = http.createServer(app);
+const io = new Server(server);
+app.set('io', io);
 
 const courseRoutes = require('./routes/courseRoutes');
 const teacherRoutes = require('./routes/teacherRoutes');
@@ -13,7 +19,8 @@ const statisticsRoutes = require('./routes/statisticsRoutes');
 const authRoutes = require('./routes/authRoutes');
 const logger = require('./middleware/logger');
 const { isAuthenticated, isAdmin } = require('./middleware/auth');
-
+const notFound = require('./middleware/notFound');
+const errorHandler = require('./middleware/errorHandler');
 const PORT = process.env.PORT || 3000;
 
 app.set('view engine', 'ejs');
@@ -22,7 +29,8 @@ app.set('views', './views');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-app.use(logger);
+app.use(morgan('dev')); 
+app.use(logger);        
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -38,31 +46,14 @@ app.use((req, res, next) => {
     next();
 });
 
-
-// app.get('/', (req, res) => {
-//     res.redirect('/courses');
-// });
-
 app.use('/courses', courseRoutes);
 app.use('/teachers', teacherRoutes);
-app.use('/statistics', statisticsRoutes);
+app.use('/statistics', isAuthenticated, statisticsRoutes);
 app.use('/', authRoutes);
 
-// Global 404 handler
-app.use((req, res) => {
-    res.status(404).render('404', {
-        url: req.originalUrl
-    });
-});
+app.use(notFound);
+app.use(errorHandler);
 
-// Global error handler
-app.use((err, req, res, next) => {
-    console.error(err);
-
-    res.status(500).render('error', {
-        message: 'Произошла внутренняя ошибка сервера'
-    });
-});
 
 async function startServer() {
     try {
@@ -74,7 +65,7 @@ async function startServer() {
 
         console.log('Database tables synchronized');
 
-        app.listen(PORT, () => {
+        server.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
         });
     } catch (error) {

@@ -1,9 +1,9 @@
-<%- include('./partials/header') %>
+    <%- include('partials/header') %>
 
-<h2>Произошла ошибка</h2>
+    <main>
+        <h1>Ошибка</h1>
+        <p><%= message || 'Произошла ошибка' %></p>
+        <a href="/courses">Вернуться к курсам</a>
+    </main>
 
-<p>К сожалению, при обработке запроса произошла ошибка.</p>
-
-<a href="/courses">Вернуться к списку курсов</a>
-
-<%- include('./partials/footer') %>
+    <%- include('partials/footer') %>

@@ -1,7 +1,9 @@
 const { Op } = require('sequelize');
 const { Course, Teacher } = require('../models');
+const { logAdminAction } = require('../middleware/logger');
+const { validationResult } = require('express-validator');
 
-const getCourses = async (req, res) => {
+const getCourses = async (req, res, next) => {
     try {
         const search = req.query.search || '';
         const teacherId = req.query.teacherId || '';
@@ -20,7 +22,7 @@ const getCourses = async (req, res) => {
         if (teacherId) {
             const teacherIdNumber = Number(teacherId);
 
-            if (!Number.isInteger(teacherIdNumber)) {
+            if (!Number.isInteger(teacherIdNumber) || teacherIdNumber <= 0) {
                 return res.status(400).render('error', {
                     title: 'Ошибка',
                     message: 'Некорректный ID преподавателя'
@@ -34,7 +36,7 @@ const getCourses = async (req, res) => {
         if (semester) {
             const semesterNumber = Number(semester);
 
-            if (!Number.isInteger(semesterNumber)) {
+            if (!Number.isInteger(semesterNumber) || semesterNumber < 1 || semesterNumber > 12) {
                 return res.status(400).render('error', {
                     title: 'Ошибка',
                     message: 'Некорректный семестр'
@@ -68,17 +70,12 @@ const getCourses = async (req, res) => {
             semester
         });
     } catch (error) {
-        console.error('Error getting courses:', error);
-
-        res.status(500).render('error', {
-            title: 'Ошибка',
-            message: 'Не удалось загрузить курсы'
-        });
+        next(error);
     }
 };
 
 
-const getCourseById = async (req, res) => {
+const getCourseById = async (req, res, next) => {
     try {
         const id = Number(req.params.id);
 
@@ -106,17 +103,12 @@ const getCourseById = async (req, res) => {
             course
         });
     } catch (error) {
-        console.error('Error getting course:', error);
-
-        res.status(500).render('error', {
-            title: 'Ошибка',
-            message: 'Не удалось загрузить курс'
-        });
+        next(error);
     }
 };
 
 
-const getCreateForm = async (req, res) => {
+const getCreateForm = async (req, res, next) => {
     try {
         const teachers = await Teacher.findAll({
             order: [['name', 'ASC']]
@@ -129,18 +121,17 @@ const getCreateForm = async (req, res) => {
             formData: {}
         });
     } catch (error) {
-        console.error('Error loading create course form:', error);
-
-        res.status(500).render('error', {
-            title: 'Ошибка',
-            message: 'Не удалось загрузить форму добавления курса'
-        });
+        next(error);
     }
 };
 
 
-const addCourse = async (req, res) => {
+
+
+const addCourse = async (req, res, next) => {
     try {
+        const errors = validationResult(req);
+
         const {
             title,
             teacherId,
@@ -149,19 +140,32 @@ const addCourse = async (req, res) => {
             description
         } = req.body;
 
-        const teacherIdNumber = Number(teacherId);
+        const teachers = await Teacher.findAll({
+            order: [['name', 'ASC']]
+        });
 
-        // Проверяем существование преподавателя
-        const teacher = await Teacher.findByPk(teacherIdNumber);
-
-        if (!teacher) {
-            return res.status(400).render('error', {
-                title: 'Ошибка',
-                message: 'Выбранный преподаватель не существует'
+        if (!errors.isEmpty()) {
+            return res.status(400).render('courses/create', {
+                title: 'Добавить курс',
+                errors: errors.array(),
+                teachers,
+                formData: req.body
             });
         }
 
-        await Course.create({
+        const teacherIdNumber = Number(teacherId);
+        const teacher = await Teacher.findByPk(teacherIdNumber);
+
+        if (!teacher) {
+            return res.status(400).render('courses/create', {
+                title: 'Добавить курс',
+                errors: [{ msg: 'Выбранный преподаватель не существует' }],
+                teachers,
+                formData: req.body
+            });
+        }
+
+        const course = await Course.create({
             title: title.trim(),
             teacherId: teacherIdNumber,
             credits: Number(credits),
@@ -169,19 +173,28 @@ const addCourse = async (req, res) => {
             description: description.trim()
         });
 
-        res.redirect('/courses');
-    } catch (error) {
-        console.error('Error adding course:', error);
+        logAdminAction(req, 'CREATE', 'COURSE', course.id);
 
-        res.status(500).render('error', {
-            title: 'Ошибка',
-            message: 'Не удалось добавить курс'
-        });
+        const io = req.app.get('io');
+
+        if (io) {
+            io.emit('courseCreated', {
+                title: course.title,
+                teacherName: teacher.name,
+                createdAt: new Date().toLocaleString('ru-RU', {
+                    timeZone: 'Europe/Chisinau'
+                })
+            });
+        }
+
+        return res.redirect('/courses');
+    } catch (error) {
+        next(error);
     }
 };
 
 
-const getEditForm = async (req, res) => {
+const getEditForm = async (req, res, next) => {
     try {
         const id = Number(req.params.id);
 
@@ -214,17 +227,13 @@ const getEditForm = async (req, res) => {
             errors: []
         });
     } catch (error) {
-        console.error('Error loading edit course form:', error);
-
-        res.status(500).render('error', {
-            title: 'Ошибка',
-            message: 'Не удалось загрузить форму редактирования курса'
-        });
+        next(error);
     }
 };
 
 
-const updateCourse = async (req, res) => {
+
+const updateCourse = async (req, res, next) => {
     try {
         const id = Number(req.params.id);
 
@@ -242,6 +251,24 @@ const updateCourse = async (req, res) => {
             });
         }
 
+        const teachers = await Teacher.findAll({
+            order: [['name', 'ASC']]
+        });
+
+        const errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+            return res.status(400).render('courses/edit', {
+                title: 'Редактировать курс',
+                course: {
+                    ...course.toJSON(),
+                    ...req.body
+                },
+                teachers,
+                errors: errors.array()
+            });
+        }
+
         const {
             title,
             teacherId,
@@ -251,14 +278,17 @@ const updateCourse = async (req, res) => {
         } = req.body;
 
         const teacherIdNumber = Number(teacherId);
-
-        // Проверяем существование преподавателя
         const teacher = await Teacher.findByPk(teacherIdNumber);
 
         if (!teacher) {
-            return res.status(400).render('error', {
-                title: 'Ошибка',
-                message: 'Выбранный преподаватель не существует'
+            return res.status(400).render('courses/edit', {
+                title: 'Редактировать курс',
+                course: {
+                    ...course.toJSON(),
+                    ...req.body
+                },
+                teachers,
+                errors: [{ msg: 'Выбранный преподаватель не существует' }]
             });
         }
 
@@ -270,19 +300,17 @@ const updateCourse = async (req, res) => {
             description: description.trim()
         });
 
-        res.redirect(`/courses/${course.id}`);
-    } catch (error) {
-        console.error('Error updating course:', error);
+        logAdminAction(req, 'UPDATE', 'COURSE', course.id);
 
-        res.status(500).render('error', {
-            title: 'Ошибка',
-            message: 'Не удалось обновить курс'
-        });
+        return res.redirect(`/courses/${course.id}`);
+    } catch (error) {
+        next(error);
     }
 };
 
 
-const deleteCourse = async (req, res) => {
+
+const deleteCourse = async (req, res, next) => {
     try {
         const id = Number(req.params.id);
 
@@ -301,15 +329,10 @@ const deleteCourse = async (req, res) => {
         }
 
         await course.destroy();
-
+        logAdminAction(req, 'DELETE', 'COURSE', course.id);
         res.redirect('/courses');
     } catch (error) {
-        console.error('Error deleting course:', error);
-
-        res.status(500).render('error', {
-            title: 'Ошибка',
-            message: 'Не удалось удалить курс'
-        });
+        next(error);
     }
 };
 

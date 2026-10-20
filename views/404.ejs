@@ -1,11 +1,9 @@
-<%- include('./partials/header') %>
+    <%- include('partials/header') %>
 
-<h2>404 Not Found</h2>
+    <main>
+        <h1>404 — Страница не найдена</h1>
+        <p>Запрошенная страница не существует.</p>
+        <a href="/courses">Вернуться к курсам</a>
+    </main>
 
-<p>Страница не найдена.</p>
-
-<p>Запрошенный URL: <%= url %></p>
-
-<a href="/courses">Вернуться к списку курсов</a>
-
-<%- include('./partials/footer') %>
+    <%- include('partials/footer') %>

@@ -16,12 +16,33 @@
         <nav>
             <nav>
                 <a href="/courses">Курсы</a>
-                <a href="/courses/new">Добавить курс</a>
                 <a href="/teachers">Преподаватели</a>
-                <a href="/teachers/new">Добавить преподавателя</a>
                 <a href="/statistics">Статистика</a>
+                <% if (currentUser) { %>
+                    <span>
+                        <%= currentUser.name %>
+                    </span>
+                    <a href="/profile">Профиль</a>
+
+                    <% if (currentUser.role==='admin' ) { %>
+                        <a href="/courses/new">Добавить курс</a>
+                        <a href="/teachers/new">Добавить преподавателя</a>
+                        <% } %>
+
+                            <form action="/logout" method="POST" style="display: inline;">
+                                <button type="submit">Выйти</button>
+                            </form>
+                            <% } else { %>
+                                <a href="/login">Вход</a>
+                                <a href="/register">Регистрация</a>
+                                <% } %>
             </nav>
         </nav>
     </header>
 
     <main>
+        <section id="notifications" class="notifications">
+            <h2>Уведомления</h2>
+        </section>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="/js/notifications.js"></script>

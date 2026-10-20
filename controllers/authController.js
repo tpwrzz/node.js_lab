@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const { User } = require('../models');
+const { validationResult } = require('express-validator');
 
 exports.showRegister = (req, res) => {
     res.render('auth/register', { errors: [], formData: {} });
@@ -9,27 +10,12 @@ exports.register = async (req, res, next) => {
     try {
         const { name, email, password, confirmPassword } = req.body;
 
-        const errors = [];
+        const errors = validationResult(req);
 
-        if (!name || name.trim().length < 2) {
-            errors.push({ msg: 'Имя должно содержать минимум 2 символа' });
-        }
-
-        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            errors.push({ msg: 'Введите корректный email' });
-        }
-
-        if (!password || password.length < 6) {
-            errors.push({ msg: 'Пароль должен содержать минимум 6 символов' });
-        }
-
-        if (password !== confirmPassword) {
-            errors.push({ msg: 'Пароли не совпадают' });
-        }
-
-        if (errors.length > 0) {
+        if (!errors.isEmpty()) {
             return res.status(400).render('auth/register', {
-                errors,
+                title: 'Регистрация',
+                errors: errors.array(),
                 formData: { name, email }
             });
         }
@@ -81,10 +67,13 @@ exports.login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
-        if (!email || !password) {
+        const errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
             return res.status(400).render('auth/login', {
-                errors: [{ msg: 'Введите email и пароль' }],
-                email: email || ''
+                title: 'Вход',
+                errors: errors.array(),
+                email
             });
         }
 
@@ -148,7 +137,15 @@ exports.profile = async (req, res, next) => {
             return;
         }
 
-        res.render('profile', { user });
+        res.render('profile', {
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                lastLogin: user.lastLogin
+            }
+        });
     } catch (error) {
         next(error);
     }

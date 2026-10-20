@@ -1,6 +1,6 @@
 const { Teacher, Course } = require('../models');
 
-const getStatistics = async (req, res) => {
+const getStatistics = async (req, res,next) => {
     try {
         const teachers = await Teacher.findAll({
             include: {
@@ -50,12 +50,7 @@ const getStatistics = async (req, res) => {
             teacherWithMostCourses
         });
     } catch (error) {
-        console.error('Error getting statistics:', error);
-
-        res.status(500).render('error', {
-            title: 'Ошибка',
-            message: 'Не удалось загрузить статистику'
-        });
+       next(error);
     }
 };
 

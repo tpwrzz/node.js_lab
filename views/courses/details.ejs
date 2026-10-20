@@ -33,7 +33,7 @@
     <strong>Кафедра:</strong>
     <%= course.Teacher.department %>
 </p>
-
+ <% if (currentUser && currentUser.role==='admin' ) { %>
 <a href="/courses/<%= course.id %>/edit">
     Редактировать
 </a>
@@ -46,7 +46,7 @@
 >
     <button type="submit">Удалить</button>
 </form>
-
+<% } %>
 <a href="/courses">Назад к курсам</a>
 
 <%- include('../partials/footer') %>

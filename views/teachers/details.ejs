@@ -46,13 +46,12 @@
     </ul>
 
 <% } %>
-
+ <% if (currentUser && currentUser.role==='admin' ) { %>
 <p>
     <a href="/teachers/<%= teacher.id %>/edit">
         Редактировать
     </a>
 </p>
-
 <form
     action="/teachers/<%= teacher.id %>/delete"
     method="POST"
@@ -63,7 +62,7 @@
         Удалить
     </button>
 </form>
-
+<% } %>
 <p>
     <a href="/teachers">Назад к преподавателям</a>
 </p>
