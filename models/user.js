@@ -26,6 +26,7 @@ const User = sequelize.define('User', {
         }
     },
 
+
     password: {
         type: DataTypes.STRING,
         allowNull: false
@@ -41,13 +42,6 @@ const User = sequelize.define('User', {
         type: DataTypes.DATE,
         allowNull: true,
         defaultValue: null
-    },
-    createdAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-    }, updatedAt: {
-        type: DataTypes.DATE,
-        allowNull: false
     }
 },
     {

@@ -1,0 +1,73 @@
+<%- include('../partials/header', { title }) %>
+
+    <h1>Редактировать книгу</h1>
+
+    <form action="/books/<%= book.id %>/edit" method="POST">
+        <% if (errors && errors.length> 0) { %>
+            <ul class="validation-errors">
+                <% errors.forEach(error=> { %>
+                    <li>
+                        <%= error.msg %>
+                    </li>
+                    <% }) %>
+            </ul>
+            <% } %>
+
+                <div>
+                    <label for="title">Название книги:</label>
+                    <input type="text" id="title" name="title" value="<%= book.title %>" required>
+                </div>
+
+                <div>
+                    <label for="authorId">Автор:</label>
+                    <select id="authorId" name="authorId" required>
+                        <option value="">Выберите автора</option>
+
+                        <% authors.forEach(author=> { %>
+                            <option value="<%= author.id %>" <%=Number(book.authorId)===Number(author.id) ? 'selected'
+                                : '' %>
+                                >
+                                <%= author.name %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="genreId">Жанр:</label>
+                    <select id="genreId" name="genreId" required>
+                        <option value="">Выберите жанр</option>
+
+                        <% genres.forEach(genre=> { %>
+                            <option value="<%= genre.id %>" <%=Number(book.genreId)===Number(genre.id) ? 'selected' : ''
+                                %>
+                                >
+                                <%= genre.name %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="pages">Количество страниц:</label>
+                    <input type="number" id="pages" name="pages" min="1" value="<%= book.pages %>" required>
+                </div>
+
+                <div>
+                    <label for="publicationDate">Дата публикации:</label>
+                    <input type="date" id="publicationDate" name="publicationDate" value="<%= book.publicationDate
+                ? new Date(book.publicationDate).toISOString().slice(0, 10)
+                : '' %>" required>
+                </div>
+
+                <div>
+                    <label for="description">Описание:</label>
+                    <textarea id="description" name="description" required><%= book.description %></textarea>
+                </div>
+
+                <button type="submit">Сохранить изменения</button>
+    </form>
+
+    <p><a href="/books/<%= book.id %>">Отмена</a></p>
+
+    <%- include('../partials/footer') %>

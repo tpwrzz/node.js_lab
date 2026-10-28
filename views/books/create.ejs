@@ -1,0 +1,72 @@
+<%- include('../partials/header', { title }) %>
+
+    <h1>Добавить книгу</h1>
+
+    <form action="/books" method="POST">
+        <% if (errors && errors.length> 0) { %>
+            <ul class="validation-errors">
+                <% errors.forEach(error=> { %>
+                    <li>
+                        <%= error.msg %>
+                    </li>
+                    <% }) %>
+            </ul>
+            <% } %>
+
+                <div>
+                    <label for="title">Название книги:</label>
+                    <input type="text" id="title" name="title" value="<%= formData.title || '' %>" required>
+                </div>
+
+                <div>
+                    <label for="authorId">Автор:</label>
+                    <select id="authorId" name="authorId" required>
+                        <option value="">Выберите автора</option>
+
+                        <% authors.forEach(author=> { %>
+                            <option value="<%= author.id %>" <%=String(formData.authorId || '' )===String(author.id)
+                                ? 'selected' : '' %>
+                                >
+                                <%= author.name %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="genreId">Жанр:</label>
+                    <select id="genreId" name="genreId" required>
+                        <option value="">Выберите жанр</option>
+
+                        <% genres.forEach(genre=> { %>
+                            <option value="<%= genre.id %>" <%=String(formData.genreId || '' )===String(genre.id)
+                                ? 'selected' : '' %>
+                                >
+                                <%= genre.name %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="pages">Количество страниц:</label>
+                    <input type="number" id="pages" name="pages" min="1" value="<%= formData.pages || '' %>" required>
+                </div>
+
+                <div>
+                    <label for="publicationDate">Дата публикации:</label>
+                    <input type="date" id="publicationDate" name="publicationDate"
+                        value="<%= formData.publicationDate || '' %>" required>
+                </div>
+
+                <div>
+                    <label for="description">Описание:</label>
+                    <textarea id="description" name="description" required><%= formData.description || '' %></textarea>
+                </div>
+
+                <button type="submit">Добавить книгу</button>
+    </form>
+
+    <p><a href="/books">Назад к каталогу</a></p>
+
+    <%- include('../partials/footer') %>

@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const { User } = require('../models');
+const { User, TakenBooks, Book } = require('../models');
 const { validationResult } = require('express-validator');
 
 exports.showRegister = (req, res) => {
@@ -137,6 +137,20 @@ exports.profile = async (req, res, next) => {
             return;
         }
 
+        const takenBooks = await TakenBooks.findAll({
+            where: { userId: user.id },
+            attributes: ['bookId'],
+            raw: true
+        });
+
+        const books = await Book.findAll({
+            where: {
+                id: takenBooks.map(book => book.bookId)
+            },
+            attributes: ['id', 'title', 'isTaken'],
+            raw: true
+        });
+        console.log('Books:', books); // Debugging line to check the books array
         res.render('profile', {
             user: {
                 id: user.id,
@@ -144,7 +158,8 @@ exports.profile = async (req, res, next) => {
                 email: user.email,
                 role: user.role,
                 lastLogin: user.lastLogin
-            }
+            },
+            books: books
         });
     } catch (error) {
         next(error);

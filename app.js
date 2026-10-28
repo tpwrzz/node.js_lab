@@ -13,8 +13,9 @@ const server = http.createServer(app);
 const io = new Server(server);
 app.set('io', io);
 
-const courseRoutes = require('./routes/courseRoutes');
-const teacherRoutes = require('./routes/teacherRoutes');
+const bookRoutes = require('./routes/bookRoutes');
+const authorRoutes = require('./routes/authorRoutes');
+const genreRoutes = require('./routes/genreRoutes');
 const statisticsRoutes = require('./routes/statisticsRoutes');
 const authRoutes = require('./routes/authRoutes');
 const logger = require('./middleware/logger');
@@ -29,8 +30,8 @@ app.set('views', './views');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-app.use(morgan('dev')); 
-app.use(logger);        
+app.use(morgan('dev'));
+app.use(logger);
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -46,8 +47,9 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use('/courses', courseRoutes);
-app.use('/teachers', teacherRoutes);
+app.use('/books', bookRoutes);
+app.use('/authors', authorRoutes);
+app.use('/genres', genreRoutes);
 app.use('/statistics', isAuthenticated, statisticsRoutes);
 app.use('/', authRoutes);
 

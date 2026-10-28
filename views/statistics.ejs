@@ -7,12 +7,12 @@
 <ul>
     <li>
         Количество преподавателей:
-        <strong><%= teachersCount %></strong>
+        <strong><%= authorsCount %></strong>
     </li>
 
     <li>
         Количество курсов:
-        <strong><%= coursesCount %></strong>
+        <strong><%= booksCount %></strong>
     </li>
 </ul>
 
@@ -35,7 +35,7 @@
                 </td>
 
                 <td>
-                    <%= coursesBySemester[semester] %>
+                    <%= booksBySemester[semester] %>
                 </td>
             </tr>
         <% } %>
@@ -45,7 +45,7 @@
 
 <h2>Курсы по преподавателям</h2>
 
-<% if (coursesByTeacher.length === 0) { %>
+<% if (booksByAuthor.length === 0) { %>
 
     <p>Преподавателей пока нет.</p>
 
@@ -60,14 +60,14 @@
         </thead>
 
         <tbody>
-            <% coursesByTeacher.forEach(teacher => { %>
+            <% booksByAuthor.forEach(author => { %>
                 <tr>
                     <td>
-                        <%= teacher.name %>
+                        <%= author.name %>
                     </td>
 
                     <td>
-                        <%= teacher.count %>
+                        <%= author.count %>
                     </td>
                 </tr>
             <% }) %>
@@ -79,13 +79,13 @@
 
 <h2>Преподаватель с максимальным количеством курсов</h2>
 
-<% if (teacherWithMostCourses) { %>
+<% if (authorWithMostBooks) { %>
 
     <p>
         <strong>
-            <%= teacherWithMostCourses.name %>
+            <%= authorWithMostBooks.name %>
         </strong>
-        — <%= teacherWithMostCourses.count %> курс(ов)
+        — <%= authorWithMostBooks.count %> курс(ов)
     </p>
 
 <% } else { %>

@@ -31,62 +31,83 @@ const validateLogin = [
         .withMessage('Введите пароль')
 ];
 
-const validateTeacher = [
+const validateAuthor = [
     body('name')
         .trim()
-        .isLength({ min: 2 })
-        .withMessage('Имя должно содержать минимум 2 символа'),
+        .isLength({ min: 2, max: 100 })
+        .withMessage('Имя автора должно содержать от 2 до 100 символов'),
 
-    body('email')
-        .trim()
-        .isEmail()
-        .withMessage('Введите корректный email'),
+    body('born')
+        .optional({ checkFalsy: true })
+        .isISO8601()
+        .withMessage('Укажите корректную дату рождения'),
 
-    body('department')
-        .trim()
-        .notEmpty()
-        .withMessage('Укажите кафедру'),
-
-    body('academicDegree')
-        .trim()
-        .notEmpty()
-        .withMessage('Укажите учёную степень')
+    body('deceased')
+        .optional({ checkFalsy: true })
+        .isISO8601()
+        .withMessage('Укажите корректную дату смерти')
+        .custom((value, { req }) => {
+            if (!value || !req.body.born) return true;
+            return new Date(value) >= new Date(req.body.born);
+        })
+        .withMessage('Дата смерти не может быть раньше даты рождения')
 ];
 
-
-const validateCourse = [
+const validateBook = [
     body('title')
         .trim()
-        .notEmpty().withMessage('Введите название курса')
+        .notEmpty()
+        .withMessage('Введите название книги')
         .bail()
-        .isLength({ max: 200 }).withMessage('Название курса не должно превышать 200 символов'),
+        .isLength({ max: 200 })
+        .withMessage('Название книги не должно превышать 200 символов'),
 
-    body('credits')
-        .notEmpty().withMessage('Укажите количество кредитов')
+    body('authorId')
+        .notEmpty()
+        .withMessage('Выберите автора')
         .bail()
-        .isInt({ min: 1, max: 60 })
-        .withMessage('Количество кредитов должно быть целым числом от 1 до 60'),
+        .isInt({ min: 1 })
+        .withMessage('Выберите корректного автора'),
 
-    body('semester')
-        .notEmpty().withMessage('Укажите семестр')
+    body('genreId')
+        .notEmpty()
+        .withMessage('Выберите жанр')
         .bail()
-        .isInt({ min: 1, max: 12 })
-        .withMessage('Семестр должен быть целым числом от 1 до 12'),
+        .isInt({ min: 1 })
+        .withMessage('Выберите корректный жанр'),
+
+    body('pages')
+        .notEmpty()
+        .withMessage('Укажите количество страниц')
+        .bail()
+        .isInt({ min: 1 })
+        .withMessage('Количество страниц должно быть положительным целым числом'),
 
     body('description')
         .trim()
-        .notEmpty().withMessage('Введите описание курса')
+        .notEmpty()
+        .withMessage('Введите описание книги')
         .bail()
         .isLength({ max: 5000 })
         .withMessage('Описание не должно превышать 5000 символов'),
 
-    body('teacherId')
-        .notEmpty().withMessage('Выберите преподавателя')
+    body('publicationDate')
+        .notEmpty()
+        .withMessage('Укажите дату публикации')
         .bail()
-        .isInt({ min: 1 })
-        .withMessage('Выберите корректного преподавателя')
+        .isISO8601()
+        .withMessage('Укажите корректную дату публикации')
 ];
 
+const validateGenre = [
+    body('name')
+        .trim()
+        .notEmpty()
+        .withMessage('Введите название жанра')
+        .bail()
+        .isLength({ max: 100 })
+        .withMessage('Название жанра не должно превышать 100 символов')
+];
 
 function handleValidationErrors(req, res, next) {
     const errors = validationResult(req);
@@ -102,8 +123,10 @@ function handleValidationErrors(req, res, next) {
 
 module.exports = {
     validateRegistration,
+    validateRegister: validateRegistration,
     validateLogin,
-    validateTeacher,
-    validateCourse,
+    validateAuthor,
+    validateBook,
+    validateGenre,
     handleValidationErrors
 };

@@ -1,36 +1,56 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Профиль</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
+
 <body>
     <%- include('partials/header') %>
 
-    <main>
-        <h1>Профиль пользователя</h1>
+        <main>
+            <h1>Профиль пользователя</h1>
 
-        <p><strong>Имя:</strong> <%= user.name %></p>
-        <p><strong>Email:</strong> <%= user.email %></p>
-        <p><strong>Роль:</strong> <%= user.role %></p>
-        <p>
-            <strong>Дата регистрации:</strong>
-            <%= new Date(user.createdAt).toLocaleString('ru-RU') %>
-        </p>
-        <p>
-            <strong>Последний вход:</strong>
-            <%= user.lastLogin
-                ? new Date(user.lastLogin).toLocaleString('ru-RU')
-                : 'Ещё не выполнялся' %>
-        </p>
+            <p><strong>Имя:</strong>
+                <%= user.name %>
+            </p>
+            <p><strong>Email:</strong>
+                <%= user.email %>
+            </p>
+            <p><strong>Роль:</strong>
+                <%= user.role %>
+            </p>
+            <p>
+                <strong>Дата регистрации:</strong>
+                <%= new Date(user.createdAt).toLocaleString('en-GB') %>
+            </p>
+            <p>
+                <strong>Последний вход:</strong>
+                <%= user.lastLogin ? new Date(user.lastLogin).toLocaleString('en-GB') : 'Ещё не выполнялся' %>
+            </p>
 
-        <form action="/logout" method="POST">
-            <button type="submit">Выйти</button>
-        </form>
-    </main>
-
-    <%- include('partials/footer') %>
+            <form action="/logout" method="POST">
+                <button type="submit">Выйти</button>
+            </form>
+        </main>
+        <% if (books.length> 0) { %>
+            <main>
+                <h1>Список книг</h1>
+                <ul>
+                    <% books.forEach(book=> { %>
+                        <li>
+                            <a href="/books/<%= book.id %>">
+                                <%= book.title %>
+                            </a> - <%= book.isTaken ? 'Выдана' : 'Доступна' %>
+                        </li>
+                        <% }); %>
+                </ul>
+            </main>
+            <% }; %>
+                <%- include('partials/footer') %>
 </body>
+
 </html>

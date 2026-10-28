@@ -1,0 +1,49 @@
+<%- include('../partials/header', { title }) %>
+
+    <h1>
+        <%= author.name %>
+    </h1>
+
+    <p>
+        <strong>Год рождения:</strong>
+        <%= author.born ? new Date(author.born).toLocaleDateString('en-GB') : 'Не указан' %>
+    </p>
+
+    <p>
+        <strong>Год смерти:</strong>
+        <%= author.deceased ? new Date(author.deceased).toLocaleDateString('en-GB') : 'Не указан' %>
+    </p>
+
+    <h2>Книги автора</h2>
+
+    <% if (!author.books || author.books.length===0) { %>
+        <p>У этого автора пока нет книг в каталоге.</p>
+        <% } else { %>
+            <ul>
+                <% author.books.forEach(book=> { %>
+                    <li>
+                        <a href="/books/<%= book.id %>">
+                            <%= book.title %>
+                        </a>
+                        — <%= book.isTaken ? 'Выдана' : 'Доступна' %>
+                    </li>
+                    <% }) %>
+            </ul>
+            <% } %>
+
+                <% if (currentUser && currentUser.role==='admin' ) { %>
+                    <hr>
+
+                    <p>
+                        <a href="/authors/<%= author.id %>/edit">Редактировать автора</a>
+                    </p>
+
+                    <form action="/authors/<%= author.id %>/delete" method="POST"
+                        onsubmit="return confirm('Вы действительно хотите удалить этого автора?');">
+                        <button type="submit">Удалить автора</button>
+                    </form>
+                    <% } %>
+
+                        <p><a href="/authors">Назад к авторам</a></p>
+
+                        <%- include('../partials/footer') %>

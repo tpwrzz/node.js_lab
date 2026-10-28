@@ -1,53 +1,53 @@
-const { Teacher, Course } = require('../models');
+const { Author, Book } = require('../models');
 
 const getStatistics = async (req, res,next) => {
     try {
-        const teachers = await Teacher.findAll({
+        const authors = await Author.findAll({
             include: {
-                model: Course,
+                model: Book,
                 attributes: ['id', 'semester']
             },
             order: [['name', 'ASC']]
         });
 
-        const courses = await Course.findAll({
+        const books = await Book.findAll({
             attributes: ['id', 'semester']
         });
 
-        const teachersCount = teachers.length;
-        const coursesCount = courses.length;
+        const authorsCount = authors.length;
+        const booksCount = books.length;
 
-        const coursesBySemester = {};
+        const booksBySemester = {};
 
         for (let semester = 1; semester <= 8; semester++) {
-            coursesBySemester[semester] = 0;
+            booksBySemester[semester] = 0;
         }
 
-        courses.forEach(course => {
-            coursesBySemester[course.semester]++;
+        books.forEach(book => {
+            booksBySemester[book.semester]++;
         });
 
-        const coursesByTeacher = teachers.map(teacher => ({
-            name: teacher.name,
-            count: teacher.Courses.length
+        const booksByAuthor = authors.map(author => ({
+            name: author.name,
+            count: author.Books.length
         }));
 
-        let teacherWithMostCourses = null;
+        let authorWithMostBooks = null;
 
-        if (coursesByTeacher.length > 0) {
-            teacherWithMostCourses = coursesByTeacher.reduce(
-                (max, teacher) =>
-                    teacher.count > max.count ? teacher : max
+        if (booksByAuthor.length > 0) {
+            authorWithMostBooks = booksByAuthor.reduce(
+                (max, author) =>
+                    author.count > max.count ? author : max
             );
         }
 
         res.render('statistics', {
             title: 'Статистика',
-            teachersCount,
-            coursesCount,
-            coursesBySemester,
-            coursesByTeacher,
-            teacherWithMostCourses
+            authorsCount,
+            booksCount,
+            booksBySemester,
+            booksByAuthor,
+            authorWithMostBooks
         });
     } catch (error) {
        next(error);

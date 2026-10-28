@@ -11,22 +11,24 @@
 <body>
 
     <header>
-        <h1>Course Management System</h1>
+        <h1>Book Management System</h1>
 
         <nav>
             <nav>
-                <a href="/courses">Курсы</a>
-                <a href="/teachers">Преподаватели</a>
+                <a href="/books">Книги</a>
+                <a href="/authors">Авторы</a>
+                <a href="/genres">Жанры</a>
                 <a href="/statistics">Статистика</a>
                 <% if (currentUser) { %>
                     <span>
-                        <%= currentUser.name %>
+                        <%= currentUser.name %>:
                     </span>
                     <a href="/profile">Профиль</a>
 
                     <% if (currentUser.role==='admin' ) { %>
-                        <a href="/courses/new">Добавить курс</a>
-                        <a href="/teachers/new">Добавить преподавателя</a>
+                        <a href="/books/new">Добавить книгу</a>
+                        <a href="/authors/new">Добавить автора</a>
+                        <a href="/genres/new">Добавить жанр</a>
                         <% } %>
 
                             <form action="/logout" method="POST" style="display: inline;">

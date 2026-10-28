@@ -1,0 +1,120 @@
+<%- include('../partials/header', { title: 'Каталог книг' }) %>
+
+    <h1>Каталог книг</h1>
+
+    <% if (currentUser && currentUser.role==='admin' ) { %>
+        <p><a href="/books/new">Добавить книгу</a></p>
+        <% } %>
+
+            <h2>Поиск и фильтрация</h2>
+
+            <form action="/books" method="GET" class="filter-form">
+                <div>
+                    <label for="search">Название книги:</label>
+                    <input type="text" id="search" name="search" value="<%= search || '' %>"
+                        placeholder="Введите название книги">
+                </div>
+
+                <div>
+                    <label for="authorId">Автор:</label>
+                    <select id="authorId" name="authorId">
+                        <option value="">Все авторы</option>
+
+                        <% authors.forEach(author=> { %>
+                            <option value="<%= author.id %>" <%=String(authorId || '' )===String(author.id) ? 'selected'
+                                : '' %>
+                                >
+                                <%= author.name %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="genreId">Жанр:</label>
+                    <select id="genreId" name="genreId">
+                        <option value="">Все жанры</option>
+
+                        <% genres.forEach(genre=> { %>
+                            <option value="<%= genre.id %>" <%=String(genreId || '' )===String(genre.id) ? 'selected'
+                                : '' %>
+                                >
+                                <%= genre.name %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="status">Статус:</label>
+                    <select id="status" name="status">
+                        <option value=""> Все книги </option>
+                        <option value="false">Доступные</option>
+                        <option value="true">Выданные</option>
+                    </select>
+                </div>
+
+                <button type="submit">Применить</button>
+                <a href="/books">Сбросить</a>
+            </form>
+
+            <% if (books.length===0) { %>
+                <p>Книги не найдены.</p>
+                <% } else { %>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Название</th>
+                                <th>Автор</th>
+                                <th>Жанр</th>
+                                <th>Страницы</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <% books.forEach(book=> { %>
+                                <tr>
+                                    <td>
+                                        <%= book.title %>
+                                    </td>
+
+                                    <td>
+                                        <%= book.author ? book.author.name : 'Не указан' %>
+                                    </td>
+
+                                    <td>
+                                        <%= book.genre ? book.genre.name : 'Не указан' %>
+                                    </td>
+
+                                    <td>
+                                        <%= book.pages %>
+                                    </td>
+
+                                    <td>
+                                        <%= book.isTaken ? 'Выдана' : 'Доступна' %>
+                                    </td>
+
+                                    <td>
+                                        <a href="/books/<%= book.id %>">Просмотр</a>
+
+                                        <% if (currentUser && currentUser.role==='admin' ) { %>
+                                            <a href="/books/<%= book.id %>/edit">
+                                                Редактировать
+                                            </a>
+
+                                            <form action="/books/<%= book.id %>/delete" method="POST"
+                                                style="display: inline;"
+                                                onsubmit="return confirm('Удалить эту книгу?');">
+                                                <button type="submit">Удалить</button>
+                                            </form>
+                                            <% } %>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                        </tbody>
+                    </table>
+                    <% } %>
+
+                        <%- include('../partials/footer') %>

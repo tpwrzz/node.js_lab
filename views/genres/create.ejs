@@ -1,0 +1,26 @@
+<%- include('../partials/header', { title }) %>
+
+    <h1>Добавить жанр</h1>
+
+    <form action="/genres" method="POST">
+        <% if (errors && errors.length> 0) { %>
+            <ul class="validation-errors">
+                <% errors.forEach(error=> { %>
+                    <li>
+                        <%= error.msg %>
+                    </li>
+                    <% }) %>
+            </ul>
+            <% } %>
+
+                <div>
+                    <label for="name">Название жанра:</label>
+                    <input type="text" id="name" name="name" value="<%= formData.name || '' %>" required>
+                </div>
+
+                <button type="submit">Добавить жанр</button>
+    </form>
+
+    <p><a href="/genres">Назад к жанрам</a></p>
+
+    <%- include('../partials/footer') %>

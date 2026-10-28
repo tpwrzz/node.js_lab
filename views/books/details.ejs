@@ -1,0 +1,130 @@
+<%- include('../partials/header', { title }) %>
+
+    <h1>
+        <%= book.title %>
+    </h1>
+
+    <p>
+        <strong>Автор:</strong>
+        <a href="/authors/<%= book.author.id %>">
+            <%= book.author.name %>
+        </a>
+    </p>
+
+    <p>
+        <strong>Жанр:</strong>
+        <a href="/genres/<%= book.genre.id %>">
+            <%= book.genre.name %>
+        </a>
+    </p>
+
+    <p><strong>Количество страниц:</strong>
+        <%= book.pages %>
+    </p>
+
+    <p>
+        <strong>Дата публикации:</strong>
+        <%= book.publicationDate ? new Date(book.publicationDate).toLocaleDateString('ru-RU') : 'Не указана' %>
+    </p>
+
+    <p><strong>Описание:</strong>
+        <%= book.description %>
+    </p>
+
+    <p>
+        <strong>Статус:</strong>
+        <%= book.isTaken ? 'Выдана' : 'Доступна' %>
+    </p>
+    <% if (currentUser && currentUser.role==='user' ) { %>
+        <hr>
+
+        <% if (!book.isTaken) { %>
+            <form action="/books/<%= book.id %>/borrow" method="POST" onsubmit="return confirm('Взять эту книгу?');">
+                <button type="submit">Взять книгу</button>
+            </form>
+            <% } else if ( activeLoan && Number(activeLoan.userId)===Number(currentUser.id) ) { %>
+                <p>Эта книга сейчас у вас.</p>
+
+                <form action="/books/<%= book.id %>/return" method="POST" onsubmit="return confirm('Вернуть книгу?');">
+                    <button type="submit">Вернуть книгу</button>
+                </form>
+                <% } else { %>
+                    <p>Книга уже выдана другому пользователю.</p>
+                    <% } %>
+                        <% } %>
+                            <% if (currentUser && currentUser.role==='admin' ) { %>
+                                <hr>
+
+                                <h2>Управление книгой</h2>
+
+                                <p>
+                                    <a href="/books/<%= book.id %>/edit">Редактировать книгу</a>
+                                </p>
+
+                                <form action="/books/<%= book.id %>/delete" method="POST"
+                                    onsubmit="return confirm('Вы действительно хотите удалить книгу?');">
+                                    <button type="submit">Удалить книгу</button>
+                                </form>
+
+                                <h3>Выдать книгу пользователю</h3>
+
+                                <% if (!book.isTaken) { %>
+                                    <% if (users && users.length> 0) { %>
+                                        <form action="/books/<%= book.id %>/assign" method="POST">
+                                            <label for="userId">Пользователь:</label>
+
+                                            <select id="userId" name="userId" required>
+                                                <option value="">Выберите пользователя</option>
+
+                                                <% users.forEach(user=> { %>
+                                                    <option value="<%= user.id %>">
+                                                        <%= user.name %> (<%= user.email %>)
+                                                    </option>
+                                                    <% }) %>
+                                            </select>
+
+                                            <button type="submit">Выдать книгу</button>
+                                        </form>
+                                        <% } else { %>
+                                            <p>Нет зарегистрированных пользователей для выдачи.</p>
+                                            <% } %>
+                                                <% } else { %>
+                                                    <p>
+                                                        Книга уже выдана. Чтобы выдать её другому пользователю,
+                                                        сначала оформите возврат.
+                                                    </p>
+                                                    <% } %>
+
+                                                        <% if (activeLoan) { %>
+                                                            <h3>Текущая выдача</h3>
+
+                                                            <p><strong>Пользователь:</strong>
+                                                                <%= activeLoan.user.name %>
+                                                            </p>
+                                                            <p><strong>Email:</strong>
+                                                                <%= activeLoan.user.email %>
+                                                            </p>
+                                                            <p>
+                                                                <strong>Дата выдачи:</strong>
+                                                                <%= new
+                                                                    Date(activeLoan.borrowedAt).toLocaleString('ru-RU')
+                                                                    %>
+                                                            </p>
+
+                                                            <form action="/books/<%= book.id %>/return-for-user"
+                                                                method="POST"
+                                                                onsubmit="return confirm('Оформить возврат этой книги?');">
+                                                                <input type="hidden" name="userId"
+                                                                    value="<%= activeLoan.userId %>">
+
+                                                                <button type="submit">Принять возврат</button>
+                                                            </form>
+                                                            <% } %>
+
+                                                                <% } %>
+
+
+
+                                                                    <p><a href="/books">Назад к каталогу</a></p>
+
+                                                                    <%- include('../partials/footer') %>

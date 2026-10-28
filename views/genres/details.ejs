@@ -1,0 +1,42 @@
+<%- include('../partials/header', { title }) %>
+
+    <h1>
+        <%= genre.name %>
+    </h1>
+
+    <h2>Книги этого жанра</h2>
+
+    <% if (!genre.books || genre.books.length===0) { %>
+        <p>В этом жанре пока нет книг.</p>
+        <% } else { %>
+            <ul>
+                <% genre.books.forEach(book=> { %>
+                    <li>
+                        <a href="/books/<%= book.id %>">
+                            <%= book.title %>
+                        </a>
+                        <% if (book.author) { %>
+                            — <%= book.author.name %>
+                                <% } %>
+                                    — <%= book.isTaken ? 'Выдана' : 'Доступна' %>
+                    </li>
+                    <% }) %>
+            </ul>
+            <% } %>
+
+                <% if (currentUser && currentUser.role==='admin' ) { %>
+                    <hr>
+
+                    <p>
+                        <a href="/genres/<%= genre.id %>/edit">Редактировать жанр</a>
+                    </p>
+
+                    <form action="/genres/<%= genre.id %>/delete" method="POST"
+                        onsubmit="return confirm('Вы действительно хотите удалить этот жанр?');">
+                        <button type="submit">Удалить жанр</button>
+                    </form>
+                    <% } %>
+
+                        <p><a href="/genres">Назад к жанрам</a></p>
+
+                        <%- include('../partials/footer') %>

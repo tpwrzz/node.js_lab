@@ -1,8 +1,8 @@
 const express = require('express');
-const {getStatistics} = require('../controllers/statisticsController');
-const { isAdmin } = require('../middleware/auth');
+const { getStatistics } = require('../controllers/statisticsController');
+
 const router = express.Router();
 
-router.get('/', isAdmin, getStatistics);
+router.get('/', getStatistics);
 
 module.exports = router;

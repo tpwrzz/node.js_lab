@@ -1,0 +1,59 @@
+<%- include('../partials/header', { title: 'Авторы' }) %>
+
+    <h1>Авторы</h1>
+
+    <% if (currentUser && currentUser.role==='admin' ) { %>
+        <p><a href="/authors/new">Добавить автора</a></p>
+        <% } %>
+
+            <% if (authors.length===0) { %>
+                <p>Авторы не найдены.</p>
+                <% } else { %>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Имя</th>
+                                <th>Год рождения</th>
+                                <th>Год смерти</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <% authors.forEach(author=> { %>
+                                <tr>
+                                    <td>
+                                        <%= author.name %>
+                                    </td>
+                                    <td>
+                                        <%= author.born ? new Date(author.born).toLocaleDateString('en-GB')
+                                            : 'Не указан' %>
+                                    </td>
+                                    <td>
+                                        <%= author.deceased ? new Date(author.deceased).toLocaleDateString('en-GB')
+                                            : '—' %>
+                                    </td>
+                                    <td>
+                                        <a href="/authors/<%= author.id %>">Просмотр</a>
+
+                                        <% if (currentUser && currentUser.role==='admin' ) { %>
+                                            <a href="/authors/<%= author.id %>/edit">
+                                                Редактировать
+                                            </a>
+
+                                            <form action="/authors/<%= author.id %>/delete" method="POST"
+                                                style="display: inline;"
+                                                onsubmit="return confirm('Удалить этого автора?');">
+                                                <button type="submit">Удалить</button>
+                                            </form>
+                                            <% } %>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                        </tbody>
+                    </table>
+                    <% } %>
+
+                        <p><a href="/books">Перейти к каталогу книг</a></p>
+
+                        <%- include('../partials/footer') %>

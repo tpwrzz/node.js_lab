@@ -1,0 +1,38 @@
+<%- include('../partials/header', { title }) %>
+
+    <h1>Добавить автора</h1>
+
+    <form action="/authors" method="POST">
+        <% if (errors && errors.length> 0) { %>
+            <ul class="validation-errors">
+                <% errors.forEach(error=> { %>
+                    <li>
+                        <%= error.msg %>
+                    </li>
+                    <% }) %>
+            </ul>
+            <% } %>
+
+                <div>
+                    <label for="name">Имя автора:</label>
+                    <input type="text" id="name" name="name" value="<%= formData.name || '' %>" required>
+                </div>
+
+                <div>
+                    <label for="born">Год рождения:</label>
+                    <input type="number" id="born" name="born" min="1" max="<%= new Date().getFullYear() %>"
+                        value="<%= formData.born || '' %>">
+                </div>
+
+                <div>
+                    <label for="deceased">Год смерти:</label>
+                    <input type="number" id="deceased" name="deceased" min="1" max="<%= new Date().getFullYear() %>"
+                        value="<%= formData.deceased || '' %>">
+                </div>
+
+                <button type="submit">Добавить автора</button>
+    </form>
+
+    <p><a href="/authors">Назад к авторам</a></p>
+
+    <%- include('../partials/footer') %>

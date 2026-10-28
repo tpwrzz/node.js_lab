@@ -1,0 +1,55 @@
+<%- include('../partials/header', { title: 'Жанры' }) %>
+
+    <h1>Жанры</h1>
+
+    <% if (currentUser && currentUser.role==='admin' ) { %>
+        <p><a href="/genres/new">Добавить жанр</a></p>
+        <% } %>
+
+            <% if (genres.length===0) { %>
+                <p>Жанры не найдены.</p>
+                <% } else { %>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Название</th>
+                                <th>Количество книг</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <% genres.forEach(genre=> { %>
+                                <tr>
+                                    <td>
+                                        <%= genre.name %>
+                                    </td>
+
+                                    <td>
+                                        <%= genre.books ? genre.books.length : 0 %>
+                                    </td>
+
+                                    <td>
+                                        <a href="/genres/<%= genre.id %>">Просмотр</a>
+
+                                        <% if (currentUser && currentUser.role==='admin' ) { %>
+                                            <a href="/genres/<%= genre.id %>/edit">
+                                                Редактировать
+                                            </a>
+
+                                            <form action="/genres/<%= genre.id %>/delete" method="POST"
+                                                style="display: inline;"
+                                                onsubmit="return confirm('Удалить этот жанр?');">
+                                                <button type="submit">Удалить</button>
+                                            </form>
+                                            <% } %>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                        </tbody>
+                    </table>
+                    <% } %>
+
+                        <p><a href="/books">Перейти к каталогу книг</a></p>
+
+                        <%- include('../partials/footer') %>
