@@ -15,7 +15,8 @@
 
                 <div>
                     <label for="title">Название книги:</label>
-                    <input type="text" id="title" name="title" value="<%= formData.title || '' %>" required>
+                    <input type="text" id="title" name="title" value="<%= formData.title || '' %>" maxlength="200"
+                        required>
                 </div>
 
                 <div>
@@ -61,7 +62,8 @@
 
                 <div>
                     <label for="description">Описание:</label>
-                    <textarea id="description" name="description" required><%= formData.description || '' %></textarea>
+                    <textarea id="description" name="description" maxlength="5000"
+                        required><%= formData.description || '' %></textarea>
                 </div>
 
                 <button type="submit">Добавить книгу</button>

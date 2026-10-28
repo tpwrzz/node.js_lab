@@ -3,92 +3,52 @@ const { Op } = require('sequelize');
 const { Book, Author, Genre, TakenBooks, User } = require('../models');
 const { validationResult } = require('express-validator');
 const { logAdminAction } = require('../middleware/logger');
+const { notifyCatalogChange } = require('../middleware/utils');
 
 const getBooks = async (req, res, next) => {
     try {
-        const search = (req.query.search || '').trim();
-        const authorId = req.query.authorId || '';
-        const genreId = req.query.genreId || '';
-        const sort = req.query.sort || 'title';
-        const direction =
-            req.query.direction === 'desc' ? 'DESC' : 'ASC';
-
-        const allowedSortFields = [
-            'title',
-            'pages',
-            'publicationDate'
-        ];
-
-        if (!allowedSortFields.includes(sort)) {
-            return res.status(400).render('error', {
-                title: 'Ошибка',
-                message: 'Недопустимое поле сортировки.'
-            });
-        }
+        const { search = '', authorId = '', genreId = '', status = '' } = req.query;
 
         const where = {};
 
-        if (search) {
-            where.title = { [Op.iLike]: `%${search}%` };
+        if (search.trim()) {
+            where.title = { [Op.iLike]: `%${search.trim()}%` };
         }
 
         if (authorId) {
-            const id = Number(authorId);
-
-            if (!Number.isInteger(id) || id <= 0) {
-                return res.status(400).render('error', {
-                    title: 'Ошибка',
-                    message: 'Некорректный ID автора.'
-                });
-            }
-
-            where.authorId = id;
+            where.authorId = Number(authorId);
         }
 
         if (genreId) {
-            const id = Number(genreId);
+            where.genreId = Number(genreId);
+        }
 
-            if (!Number.isInteger(id) || id <= 0) {
-                return res.status(400).render('error', {
-                    title: 'Ошибка',
-                    message: 'Некорректный ID жанра.'
-                });
-            }
-
-            where.genreId = id;
+        if (status === 'true' || status === 'false') {
+            where.isTaken = status === 'true';
         }
 
         const [books, authors, genres] = await Promise.all([
             Book.findAll({
                 where,
                 include: [
-                    {
-                        model: Author,
-                        as: 'author',
-                        attributes: ['id', 'name']
-                    },
-                    {
-                        model: Genre,
-                        as: 'genre',
-                        attributes: ['id', 'name']
-                    }
+                    { model: Author, as: 'author' },
+                    { model: Genre, as: 'genre' }
                 ],
-                order: [[sort, direction]]
+                order: [['title', 'ASC']]
             }),
             Author.findAll({ order: [['name', 'ASC']] }),
             Genre.findAll({ order: [['name', 'ASC']] })
         ]);
 
         return res.render('books/index', {
-            title: 'Книги',
+            title: 'Каталог книг',
             books,
             authors,
             genres,
             search,
             authorId,
             genreId,
-            sort,
-            direction
+            status
         });
     } catch (error) {
         return next(error);
@@ -242,17 +202,7 @@ const addBook = async (req, res, next) => {
 
         logAdminAction(req, 'CREATE', 'BOOK', book.id);
 
-        const io = req.app.get('io');
-
-        if (io) {
-            io.emit('bookCreated', {
-                title: book.title,
-                authorName: author.name,
-                createdAt: new Date().toLocaleString('ru-RU', {
-                    timeZone: 'Europe/Chisinau'
-                })
-            });
-        }
+        notifyCatalogChange(req, 'book', 'created', book.title);
 
         return res.redirect('/books');
     } catch (error) {
@@ -292,7 +242,8 @@ const getEditForm = async (req, res, next) => {
             book,
             authors,
             genres,
-            errors: []
+            errors: [],
+            formData: {}
         });
     } catch (error) {
         return next(error);
@@ -377,6 +328,7 @@ const updateBook = async (req, res, next) => {
 
         logAdminAction(req, 'UPDATE', 'BOOK', book.id);
 
+        notifyCatalogChange(req, 'book', 'updated', book.title);
         return res.redirect(`/books/${book.id}`);
     } catch (error) {
         return next(error);
@@ -416,6 +368,7 @@ const deleteBook = async (req, res, next) => {
 
         logAdminAction(req, 'DELETE', 'BOOK', book.id);
 
+        notifyCatalogChange(req, 'book', 'deleted', book.title);
         return res.redirect('/books');
     } catch (error) {
         return next(error);

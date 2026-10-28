@@ -2,6 +2,7 @@
 const { Author, Book } = require('../models');
 const { validationResult } = require('express-validator');
 const { logAdminAction } = require('../middleware/logger');
+const { notifyCatalogChange } = require('../middleware/utils');
 
 const getAuthors = async (req, res, next) => {
     try {
@@ -50,7 +51,7 @@ const addAuthor = async (req, res, next) => {
             born: born || null,
             deceased: deceased || null
         });
-
+        notifyCatalogChange(req, 'author', 'created', author.name);
         logAdminAction(req, 'CREATE', 'AUTHOR', author.id);
 
         return res.redirect('/authors');
@@ -109,10 +110,11 @@ const getEditForm = async (req, res, next) => {
                 url: req.originalUrl
             });
         }
-
+        console.log(author);
         return res.render('authors/edit', {
             title: 'Редактировать автора',
             author,
+            formData: {},
             errors: []
         });
     } catch (error) {
@@ -159,6 +161,7 @@ const updateAuthor = async (req, res, next) => {
             deceased: deceased || null
         });
 
+        notifyCatalogChange(req, 'author', 'updated', author.name);
         logAdminAction(req, 'UPDATE', 'AUTHOR', author.id);
 
         return res.redirect(`/authors/${author.id}`);
@@ -198,6 +201,7 @@ const deleteAuthor = async (req, res, next) => {
 
         await author.destroy();
 
+        notifyCatalogChange(req, 'author', 'deleted', author.name);
         logAdminAction(req, 'DELETE', 'AUTHOR', author.id);
 
         return res.redirect('/authors');

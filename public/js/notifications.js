@@ -5,25 +5,40 @@ document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('notifications');
     if (!container) return;
 
-    socket.on('bookCreated', (data) => {
+    socket.on('catalogNotification', (data) => {
         const notification = document.createElement('div');
         notification.className = 'book-notification';
 
-        const title = document.createElement('strong');
-        title.textContent = `Добавлен новый курс: ${data.title}`;
+        const messages = {
+            created: 'Создано',
+            updated: 'Изменено',
+            deleted: 'Удалено'
+        };
 
-        const author = document.createElement('p');
-        author.textContent = `Преподаватель: ${data.authorName}`;
+        const entityNames = {
+            book: 'Книга',
+            author: 'Автор',
+            genre: 'Жанр'
+        };
 
+        const heading = document.createElement('strong');
+        heading.textContent =
+            `${entityNames[data.entity] || 'Объект'}: ` +
+            `${messages[data.action] || data.action}`;
+
+        const name = document.createElement('p');
+        name.textContent = data.name || 'Без названия';
+        const admin = document.createElement('p');
+        admin.textContent = `Кто выполнил действие: ${data.adminName}`;
         const date = document.createElement('small');
-        date.textContent = `Время добавления: ${data.createdAt}`;
+        date.textContent = `Время: ${data.createdAt}`;
 
         const close = document.createElement('button');
         close.type = 'button';
         close.textContent = 'Закрыть';
         close.addEventListener('click', () => notification.remove());
 
-        notification.append(title, author, date, close);
+        notification.append(heading, name, admin, date, close);
         container.prepend(notification);
 
         setTimeout(() => notification.remove(), 8000);

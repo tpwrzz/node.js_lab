@@ -1,56 +1,88 @@
-const { Author, Book } = require('../models');
+const { sequelize, Author, Book, Genre } = require('../models');
 
-const getStatistics = async (req, res,next) => {
+const getStatistics = async (req, res, next) => {
     try {
-        const authors = await Author.findAll({
-            include: {
-                model: Book,
-                attributes: ['id', 'semester']
-            },
-            order: [['name', 'ASC']]
-        });
+        const [
+            booksCount,
+            availableBooksCount,
+            takenBooksCount,
+            authorsCount,
+            genresCount,
+            booksByGenre,
+            booksByAuthor
+        ] = await Promise.all([
+            Book.count(),
+            Book.count({ where: { isTaken: false } }),
+            Book.count({ where: { isTaken: true } }),
+            Author.count(),
+            Genre.count(),
 
-        const books = await Book.findAll({
-            attributes: ['id', 'semester']
-        });
+            Genre.findAll({
+                attributes: [
+                    'id',
+                    'name',
+                    [
+                        sequelize.fn('COUNT', sequelize.col('books.id')),
+                        'count'
+                    ]
+                ],
+                include: [{
+                    model: Book,
+                    as: 'books',
+                    attributes: []
+                }],
+                group: ['Genre.id'],
+                order: [['name', 'ASC']]
+            }),
 
-        const authorsCount = authors.length;
-        const booksCount = books.length;
+            Author.findAll({
+                attributes: [
+                    'id',
+                    'name',
+                    [
+                        sequelize.fn('COUNT', sequelize.col('books.id')),
+                        'count'
+                    ]
+                ],
+                include: [{
+                    model: Book,
+                    as: 'books',
+                    attributes: []
+                }],
+                group: ['Author.id'],
+                order: [['name', 'ASC']]
+            })
+        ]);
 
-        const booksBySemester = {};
-
-        for (let semester = 1; semester <= 8; semester++) {
-            booksBySemester[semester] = 0;
-        }
-
-        books.forEach(book => {
-            booksBySemester[book.semester]++;
-        });
-
-        const booksByAuthor = authors.map(author => ({
-            name: author.name,
-            count: author.Books.length
+        const formattedBooksByGenre = booksByGenre.map(genre => ({
+            name: genre.name,
+            count: Number(genre.get('count'))
         }));
 
-        let authorWithMostBooks = null;
+        const formattedBooksByAuthor = booksByAuthor.map(author => ({
+            name: author.name,
+            count: Number(author.get('count'))
+        }));
 
-        if (booksByAuthor.length > 0) {
-            authorWithMostBooks = booksByAuthor.reduce(
-                (max, author) =>
-                    author.count > max.count ? author : max
-            );
-        }
+        const authorWithMostBooks = formattedBooksByAuthor.length > 0
+            ? formattedBooksByAuthor.reduce((max, author) =>
+                author.count > max.count ? author : max
+            )
+            : null;
 
-        res.render('statistics', {
-            title: 'Статистика',
-            authorsCount,
+        return res.render('statistics', {
+            title: 'Статистика библиотеки',
             booksCount,
-            booksBySemester,
-            booksByAuthor,
+            availableBooksCount,
+            takenBooksCount,
+            authorsCount,
+            genresCount,
+            booksByGenre: formattedBooksByGenre,
+            booksByAuthor: formattedBooksByAuthor,
             authorWithMostBooks
         });
     } catch (error) {
-       next(error);
+        return next(error);
     }
 };
 

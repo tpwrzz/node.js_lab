@@ -1,6 +1,7 @@
 const { Genre, Book } = require('../models');
 const { validationResult } = require('express-validator');
 const { logAdminAction } = require('../middleware/logger');
+const { notifyCatalogChange } = require('../middleware/utils');
 
 const getGenres = async (req, res, next) => {
     console.log('Fetching genres...');
@@ -49,6 +50,7 @@ const addGenre = async (req, res, next) => {
 
         logAdminAction(req, 'CREATE', 'GENRE', genre.id);
 
+        notifyCatalogChange(req, 'genre', 'created', genre.name);
         return res.redirect('/genres');
     } catch (error) {
         return next(error);
@@ -108,7 +110,8 @@ const getEditForm = async (req, res, next) => {
         return res.render('genres/edit', {
             title: 'Редактировать жанр',
             genre,
-            errors: []
+            errors: [],
+            formData: {}
         });
     } catch (error) {
         return next(error);
@@ -152,6 +155,8 @@ const updateGenre = async (req, res, next) => {
 
         logAdminAction(req, 'UPDATE', 'GENRE', genre.id);
 
+        notifyCatalogChange(req, 'genre', 'updated', genre.name);
+
         return res.redirect(`/genres/${genre.id}`);
     } catch (error) {
         return next(error);
@@ -191,6 +196,7 @@ const deleteGenre = async (req, res, next) => {
 
         logAdminAction(req, 'DELETE', 'GENRE', genre.id);
 
+        notifyCatalogChange(req, 'genre', 'deleted', genre.name);
         return res.redirect('/genres');
     } catch (error) {
         return next(error);

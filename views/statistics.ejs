@@ -1,97 +1,92 @@
-<%- include('./partials/header') %>
+<%- include('./partials/header', { title: 'Статистика библиотеки' }) %>
 
-<h1>Статистика</h1>
+    <h1>Статистика библиотеки</h1>
 
-<h2>Общая статистика</h2>
+    <h2>Общая статистика</h2>
 
-<ul>
-    <li>
-        Количество преподавателей:
-        <strong><%= authorsCount %></strong>
-    </li>
+    <ul>
+        <li>Количество книг: <strong>
+                <%= booksCount %>
+            </strong></li>
+        <li>Доступные книги: <strong>
+                <%= availableBooksCount %>
+            </strong></li>
+        <li>Выданные книги: <strong>
+                <%= takenBooksCount %>
+            </strong></li>
+        <li>Количество авторов: <strong>
+                <%= authorsCount %>
+            </strong></li>
+        <li>Количество жанров: <strong>
+                <%= genresCount %>
+            </strong></li>
+    </ul>
 
-    <li>
-        Количество курсов:
-        <strong><%= booksCount %></strong>
-    </li>
-</ul>
+    <h2>Книги по жанрам</h2>
 
+    <% if (booksByGenre.length===0) { %>
+        <p>Данных о жанрах пока нет.</p>
+        <% } else { %>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Жанр</th>
+                        <th>Количество книг</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% booksByGenre.forEach(genre=> { %>
+                        <tr>
+                            <td>
+                                <%= genre.name %>
+                            </td>
+                            <td>
+                                <%= genre.count %>
+                            </td>
+                        </tr>
+                        <% }) %>
+                </tbody>
+            </table>
+            <% } %>
 
-<h2>Курсы по семестрам</h2>
+                <h2>Книги по авторам</h2>
 
-<table>
-    <thead>
-        <tr>
-            <th>Семестр</th>
-            <th>Количество курсов</th>
-        </tr>
-    </thead>
+                <% if (booksByAuthor.length===0) { %>
+                    <p>Данных об авторах пока нет.</p>
+                    <% } else { %>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Автор</th>
+                                    <th>Количество книг</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% booksByAuthor.forEach(author=> { %>
+                                    <tr>
+                                        <td>
+                                            <%= author.name %>
+                                        </td>
+                                        <td>
+                                            <%= author.count %>
+                                        </td>
+                                    </tr>
+                                    <% }) %>
+                            </tbody>
+                        </table>
+                        <% } %>
 
-    <tbody>
-        <% for (let semester = 1; semester <= 8; semester++) { %>
-            <tr>
-                <td>
-                    <%= semester %>
-                </td>
+                            <h2>Автор с наибольшим количеством книг</h2>
 
-                <td>
-                    <%= booksBySemester[semester] %>
-                </td>
-            </tr>
-        <% } %>
-    </tbody>
-</table>
+                            <% if (authorWithMostBooks) { %>
+                                <p>
+                                    <strong>
+                                        <%= authorWithMostBooks.name %>
+                                    </strong>
+                                    — <%= authorWithMostBooks.count %> книг(и)
+                                </p>
+                                <% } else { %>
+                                    <p>Данных об авторах пока нет.</p>
+                                    <% } %>
 
-
-<h2>Курсы по преподавателям</h2>
-
-<% if (booksByAuthor.length === 0) { %>
-
-    <p>Преподавателей пока нет.</p>
-
-<% } else { %>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Преподаватель</th>
-                <th>Количество курсов</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            <% booksByAuthor.forEach(author => { %>
-                <tr>
-                    <td>
-                        <%= author.name %>
-                    </td>
-
-                    <td>
-                        <%= author.count %>
-                    </td>
-                </tr>
-            <% }) %>
-        </tbody>
-    </table>
-
-<% } %>
-
-
-<h2>Преподаватель с максимальным количеством курсов</h2>
-
-<% if (authorWithMostBooks) { %>
-
-    <p>
-        <strong>
-            <%= authorWithMostBooks.name %>
-        </strong>
-        — <%= authorWithMostBooks.count %> курс(ов)
-    </p>
-
-<% } else { %>
-
-    <p>Данных о преподавателях пока нет.</p>
-
-<% } %>
-
-<%- include('./partials/footer') %>
+                                        <%- include('./partials/footer') %>

@@ -15,7 +15,8 @@
 
                 <div>
                     <label for="name">Название жанра:</label>
-                    <input type="text" id="name" name="name" value="<%= formData.name || '' %>" required>
+                    <input type="text" id="name" name="name" value="<%= formData.name || '' %>" minlength="2"
+                        maxlength="100" autocomplete="off" required>
                 </div>
 
                 <button type="submit">Добавить жанр</button>

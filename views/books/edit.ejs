@@ -15,7 +15,7 @@
 
                 <div>
                     <label for="title">Название книги:</label>
-                    <input type="text" id="title" name="title" value="<%= book.title %>" required>
+                    <input type="text" id="title" name="title" value="<%= book.title || '' %>" maxlength="200" required>
                 </div>
 
                 <div>
@@ -62,9 +62,9 @@
 
                 <div>
                     <label for="description">Описание:</label>
-                    <textarea id="description" name="description" required><%= book.description %></textarea>
+                    <textarea id="description" name="description" maxlength="5000"
+                        required><%= book.description || '' %></textarea>
                 </div>
-
                 <button type="submit">Сохранить изменения</button>
     </form>
 

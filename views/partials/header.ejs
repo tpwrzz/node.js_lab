@@ -18,7 +18,6 @@
                 <a href="/books">Книги</a>
                 <a href="/authors">Авторы</a>
                 <a href="/genres">Жанры</a>
-                <a href="/statistics">Статистика</a>
                 <% if (currentUser) { %>
                     <span>
                         <%= currentUser.name %>:
@@ -26,6 +25,8 @@
                     <a href="/profile">Профиль</a>
 
                     <% if (currentUser.role==='admin' ) { %>
+
+                        <a href="/statistics">Статистика</a>
                         <a href="/books/new">Добавить книгу</a>
                         <a href="/authors/new">Добавить автора</a>
                         <a href="/genres/new">Добавить жанр</a>
@@ -41,10 +42,7 @@
             </nav>
         </nav>
     </header>
-
+    <div id="notifications" class="notifications" aria-live="polite" aria-label="Уведомления"></div>
     <main>
-        <section id="notifications" class="notifications">
-            <h2>Уведомления</h2>
-        </section>
         <script src="/socket.io/socket.io.js"></script>
         <script src="/js/notifications.js"></script>

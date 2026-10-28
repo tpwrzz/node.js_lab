@@ -44,13 +44,18 @@
                             <% }) %>
                     </select>
                 </div>
-
                 <div>
                     <label for="status">Статус:</label>
                     <select id="status" name="status">
-                        <option value=""> Все книги </option>
-                        <option value="false">Доступные</option>
-                        <option value="true">Выданные</option>
+                        <option value="" <%=status==='' ? 'selected' : '' %>>
+                            Все книги
+                        </option>
+                        <option value="false" <%=status==='false' ? 'selected' : '' %>>
+                            Доступные
+                        </option>
+                        <option value="true" <%=status==='true' ? 'selected' : '' %>>
+                            Выданные
+                        </option>
                     </select>
                 </div>
 
